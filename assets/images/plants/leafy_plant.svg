@@ -1,0 +1,47 @@
+<svg width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+  <!-- Modern ceramic pot -->
+  <ellipse cx="60" cy="95" rx="26" ry="7" fill="#E0E0E0"/>
+  <rect x="34" y="75" width="52" height="20" fill="#F8F9FA" rx="3"/>
+  <ellipse cx="60" cy="75" rx="26" ry="7" fill="#FFFFFF"/>
+  
+  <!-- Pot rim with gray accent -->
+  <ellipse cx="60" cy="73" rx="28" ry="8" fill="none" stroke="#9E9E9E" stroke-width="2"/>
+  
+  <!-- Soil -->
+  <ellipse cx="60" cy="77" rx="22" ry="5" fill="#8D6E63"/>
+  
+  <!-- Plant stems -->
+  <line x1="60" y1="77" x2="45" y2="50" stroke="#2E7D32" stroke-width="2" stroke-linecap="round"/>
+  <line x1="60" y1="77" x2="60" y2="35" stroke="#2E7D32" stroke-width="2" stroke-linecap="round"/>
+  <line x1="60" y1="77" x2="75" y2="45" stroke="#2E7D32" stroke-width="2" stroke-linecap="round"/>
+  <line x1="60" y1="77" x2="40" y2="65" stroke="#2E7D32" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="60" y1="77" x2="80" y2="60" stroke="#2E7D32" stroke-width="1.5" stroke-linecap="round"/>
+  
+  <!-- Large leaves -->
+  <!-- Top center leaf -->
+  <ellipse cx="60" cy="30" rx="8" ry="15" fill="#8BC34A" transform="rotate(0 60 30)"/>
+  
+  <!-- Left side leaves -->
+  <ellipse cx="42" cy="45" rx="7" ry="12" fill="#2E7D32" transform="rotate(-20 42 45)"/>
+  <ellipse cx="38" cy="60" rx="6" ry="10" fill="#8BC34A" transform="rotate(-30 38 60)"/>
+  
+  <!-- Right side leaves -->
+  <ellipse cx="78" cy="40" rx="7" ry="12" fill="#2E7D32" transform="rotate(25 78 40)"/>
+  <ellipse cx="82" cy="55" rx="6" ry="10" fill="#8BC34A" transform="rotate(30 82 55)"/>
+  
+  <!-- Medium leaves for fullness -->
+  <ellipse cx="52" cy="40" rx="5" ry="9" fill="#8BC34A" transform="rotate(-10 52 40)"/>
+  <ellipse cx="68" cy="35" rx="5" ry="9" fill="#2E7D32" transform="rotate(15 68 35)"/>
+  <ellipse cx="35" cy="50" rx="4" ry="7" fill="#2E7D32" transform="rotate(-40 35 50)"/>
+  <ellipse cx="85" cy="48" rx="4" ry="7" fill="#8BC34A" transform="rotate(40 85 48)"/>
+  
+  <!-- Small accent leaves -->
+  <ellipse cx="48" cy="55" rx="3" ry="6" fill="#8BC34A" transform="rotate(-15 48 55)"/>
+  <ellipse cx="72" cy="50" rx="3" ry="6" fill="#2E7D32" transform="rotate(20 72 50)"/>
+  <ellipse cx="58" cy="45" rx="3" ry="5" fill="#8BC34A" transform="rotate(5 58 45)"/>
+  
+  <!-- Leaf veins for detail -->
+  <line x1="60" y1="20" x2="60" y2="40" stroke="#2E7D32" stroke-width="0.5" opacity="0.6"/>
+  <line x1="42" y1="35" x2="42" y2="55" stroke="#1B5E20" stroke-width="0.5" opacity="0.6"/>
+  <line x1="78" y1="30" x2="78" y2="50" stroke="#1B5E20" stroke-width="0.5" opacity="0.6"/>
+</svg>

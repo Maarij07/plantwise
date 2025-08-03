@@ -1,0 +1,50 @@
+<svg width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+  <!-- Decorative terracotta pot -->
+  <ellipse cx="60" cy="95" rx="28" ry="8" fill="#A0725B"/>
+  <rect x="32" y="70" width="56" height="25" fill="#D7956B" rx="2"/>
+  <ellipse cx="60" cy="70" rx="28" ry="8" fill="#E8A47B"/>
+  
+  <!-- Pot rim -->
+  <ellipse cx="60" cy="68" rx="30" ry="9" fill="none" stroke="#A0725B" stroke-width="2"/>
+  
+  <!-- Simple decorative pattern on pot -->
+  <circle cx="45" cy="82" r="2" fill="#A0725B" opacity="0.6"/>
+  <circle cx="60" cy="82" r="2" fill="#A0725B" opacity="0.6"/>
+  <circle cx="75" cy="82" r="2" fill="#A0725B" opacity="0.6"/>
+  <rect x="40" y="87" width="40" height="1" fill="#A0725B" opacity="0.4" rx="0.5"/>
+  
+  <!-- Soil -->
+  <ellipse cx="60" cy="72" rx="24" ry="6" fill="#8D6E63"/>
+  
+  <!-- Tree trunk -->
+  <rect x="58" y="50" width="4" height="22" fill="#8D6E63" rx="2"/>
+  
+  <!-- Main tree canopy - layered circular shapes -->
+  <!-- Bottom layer (largest) -->
+  <circle cx="60" cy="45" r="22" fill="#8BC34A"/>
+  
+  <!-- Middle layer -->
+  <circle cx="55" cy="40" r="18" fill="#2E7D32"/>
+  <circle cx="65" cy="42" r="16" fill="#8BC34A"/>
+  
+  <!-- Top layer (smallest) -->
+  <circle cx="60" cy="35" r="14" fill="#2E7D32"/>
+  <circle cx="58" cy="30" r="10" fill="#8BC34A"/>
+  
+  <!-- Additional small foliage clusters for natural variation -->
+  <circle cx="45" cy="50" r="8" fill="#8BC34A"/>
+  <circle cx="75" cy="48" r="7" fill="#2E7D32"/>
+  <circle cx="42" cy="38" r="6" fill="#2E7D32"/>
+  <circle cx="78" cy="38" r="6" fill="#8BC34A"/>
+  
+  <!-- Small accent clusters -->
+  <circle cx="50" cy="25" r="4" fill="#8BC34A"/>
+  <circle cx="70" cy="25" r="4" fill="#2E7D32"/>
+  <circle cx="60" cy="20" r="5" fill="#8BC34A"/>
+  
+  <!-- Tiny detail clusters for fullness -->
+  <circle cx="38" cy="45" r="3" fill="#8BC34A"/>
+  <circle cx="82" cy="45" r="3" fill="#2E7D32"/>
+  <circle cx="48" cy="32" r="3" fill="#2E7D32"/>
+  <circle cx="72" cy="32" r="3" fill="#8BC34A"/>
+</svg>

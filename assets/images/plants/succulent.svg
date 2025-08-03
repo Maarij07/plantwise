@@ -1,0 +1,55 @@
+<svg width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+  <!-- Round ceramic pot -->
+  <ellipse cx="60" cy="95" rx="28" ry="8" fill="#F8F9FA" stroke="#E0E0E0" stroke-width="1"/>
+  <rect x="32" y="70" width="56" height="25" fill="#F8F9FA" rx="2"/>
+  <ellipse cx="60" cy="70" rx="28" ry="8" fill="#FFFFFF"/>
+  
+  <!-- Pot rim with terracotta accent -->
+  <ellipse cx="60" cy="68" rx="30" ry="9" fill="none" stroke="#D7CCC8" stroke-width="2"/>
+  
+  <!-- Soil -->
+  <ellipse cx="60" cy="72" rx="24" ry="6" fill="#8D6E63"/>
+  
+  <!-- Succulent plant -->
+  <!-- Center rosette -->
+  <g transform="translate(60, 55)">
+    <!-- Outer leaves -->
+    <ellipse cx="0" cy="-8" rx="6" ry="12" fill="#8BC34A" transform="rotate(0)"/>
+    <ellipse cx="0" cy="-8" rx="6" ry="12" fill="#8BC34A" transform="rotate(45)"/>
+    <ellipse cx="0" cy="-8" rx="6" ry="12" fill="#8BC34A" transform="rotate(90)"/>
+    <ellipse cx="0" cy="-8" rx="6" ry="12" fill="#8BC34A" transform="rotate(135)"/>
+    <ellipse cx="0" cy="-8" rx="6" ry="12" fill="#8BC34A" transform="rotate(180)"/>
+    <ellipse cx="0" cy="-8" rx="6" ry="12" fill="#8BC34A" transform="rotate(225)"/>
+    <ellipse cx="0" cy="-8" rx="6" ry="12" fill="#8BC34A" transform="rotate(270)"/>
+    <ellipse cx="0" cy="-8" rx="6" ry="12" fill="#8BC34A" transform="rotate(315)"/>
+    
+    <!-- Inner leaves -->
+    <ellipse cx="0" cy="-6" rx="4" ry="8" fill="#2E7D32" transform="rotate(22.5)"/>
+    <ellipse cx="0" cy="-6" rx="4" ry="8" fill="#2E7D32" transform="rotate(67.5)"/>
+    <ellipse cx="0" cy="-6" rx="4" ry="8" fill="#2E7D32" transform="rotate(112.5)"/>
+    <ellipse cx="0" cy="-6" rx="4" ry="8" fill="#2E7D32" transform="rotate(157.5)"/>
+    <ellipse cx="0" cy="-6" rx="4" ry="8" fill="#2E7D32" transform="rotate(202.5)"/>
+    <ellipse cx="0" cy="-6" rx="4" ry="8" fill="#2E7D32" transform="rotate(247.5)"/>
+    <ellipse cx="0" cy="-6" rx="4" ry="8" fill="#2E7D32" transform="rotate(292.5)"/>
+    <ellipse cx="0" cy="-6" rx="4" ry="8" fill="#2E7D32" transform="rotate(337.5)"/>
+    
+    <!-- Center core -->
+    <circle cx="0" cy="0" r="3" fill="#2E7D32"/>
+  </g>
+  
+  <!-- Small side shoots -->
+  <g transform="translate(45, 62)">
+    <ellipse cx="0" cy="-4" rx="2" ry="6" fill="#8BC34A" transform="rotate(30)"/>
+    <ellipse cx="0" cy="-4" rx="2" ry="6" fill="#8BC34A" transform="rotate(90)"/>
+    <ellipse cx="0" cy="-4" rx="2" ry="6" fill="#8BC34A" transform="rotate(150)"/>
+    <circle cx="0" cy="0" r="1.5" fill="#2E7D32"/>
+  </g>
+  
+  <g transform="translate(75, 60)">
+    <ellipse cx="0" cy="-3" rx="1.5" ry="4" fill="#8BC34A" transform="rotate(45)"/>
+    <ellipse cx="0" cy="-3" rx="1.5" ry="4" fill="#8BC34A" transform="rotate(135)"/>
+    <ellipse cx="0" cy="-3" rx="1.5" ry="4" fill="#8BC34A" transform="rotate(225)"/>
+    <ellipse cx="0" cy="-3" rx="1.5" ry="4" fill="#8BC34A" transform="rotate(315)"/>
+    <circle cx="0" cy="0" r="1" fill="#2E7D32"/>
+  </g>
+</svg>

@@ -1,0 +1,21 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Calendar Base -->
+  <rect x="8" y="14" width="48" height="42" rx="4" fill="#E0E0E0"/>
+  <rect x="8" y="14" width="48" height="10" fill="#BDBDBD"/>
+  
+  <!-- Calendar Rings -->
+  <rect x="18" y="8" width="4" height="10" rx="2" fill="#757575"/>
+  <rect x="42" y="8" width="4" height="10" rx="2" fill="#757575"/>
+  
+  <!-- Leaf Accent -->
+  <path d="M52 6C50 6 48 7 47 9C48.5 10 50.5 11 52 11C53.5 11 55 10 56 8C55 6.5 53.5 6 52 6Z" fill="#8BC34A"/>
+  <path d="M47 9C47.5 10.5 49 12 50.5 12C52 12 53.5 11 54.5 9C53.5 10 52 10.5 50.5 10.5C49 10.5 47.5 10 47 9Z" fill="#2E7D32"/>
+
+  <!-- Grid (minimal) -->
+  <circle cx="20" cy="30" r="2" fill="#757575"/>
+  <circle cx="32" cy="30" r="2" fill="#757575"/>
+  <circle cx="44" cy="30" r="2" fill="#757575"/>
+  <circle cx="20" cy="40" r="2" fill="#757575"/>
+  <circle cx="32" cy="40" r="2" fill="#757575"/>
+  <circle cx="44" cy="40" r="2" fill="#757575"/>
+</svg>

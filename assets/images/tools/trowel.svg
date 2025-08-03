@@ -1,0 +1,24 @@
+<svg width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+  <!-- Trowel blade (green) -->
+  <path d="M 40,75 Q 38,70 40,65 L 45,35 Q 47,30 52,30 L 68,30 Q 73,30 75,35 L 80,65 Q 82,70 80,75 Q 78,80 70,82 L 50,82 Q 42,80 40,75 Z" 
+        fill="#2E7D32" stroke="#1B5E20" stroke-width="1"/>
+  
+  <!-- Blade highlight for depth -->
+  <path d="M 48,35 L 72,35 Q 75,36 76,40 L 78,55 Q 76,58 72,58 L 48,58 Q 44,58 42,55 L 44,40 Q 45,36 48,35 Z" 
+        fill="#8BC34A" opacity="0.6"/>
+  
+  <!-- Handle connection (ferrule) -->
+  <rect x="57" y="25" width="6" height="8" fill="#9E9E9E" rx="1"/>
+  
+  <!-- Handle (gray) -->
+  <rect x="55" y="5" width="10" height="25" fill="#757575" rx="5"/>
+  
+  <!-- Handle grip texture -->
+  <line x1="58" y1="8" x2="58" y2="27" stroke="#616161" stroke-width="0.5"/>
+  <line x1="62" y1="8" x2="62" y2="27" stroke="#616161" stroke-width="0.5"/>
+  <circle cx="60" cy="15" r="1" fill="#616161" opacity="0.3"/>
+  <circle cx="60" cy="20" r="1" fill="#616161" opacity="0.3"/>
+  
+  <!-- Handle end cap -->
+  <ellipse cx="60" cy="5" rx="5" ry="3" fill="#9E9E9E"/>
+</svg>

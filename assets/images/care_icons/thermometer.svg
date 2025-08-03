@@ -1,0 +1,62 @@
+<svg width="48" height="48" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+  <!-- Define gradients -->
+  <defs>
+    <linearGradient id="mercuryGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#FF6B35;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#FF8A50;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#E53E3E;stop-opacity:1" />
+    </linearGradient>
+    
+    <linearGradient id="thermometerBody" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#F5F5F5;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#E0E0E0;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#BDBDBD;stop-opacity:1" />
+    </linearGradient>
+    
+    <radialGradient id="bulbGradient" cx="50%" cy="50%" r="60%">
+      <stop offset="0%" style="stop-color:#FF8A50;stop-opacity:1" />
+      <stop offset="70%" style="stop-color:#FF6B35;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#E53E3E;stop-opacity:1" />
+    </radialGradient>
+  </defs>
+  
+  <!-- Thermometer body (outer tube) -->
+  <rect x="20" y="6" width="8" height="26" rx="4" ry="4" fill="url(#thermometerBody)" stroke="#BDBDBD" stroke-width="0.5"/>
+  
+  <!-- Inner tube (hollow part) -->
+  <rect x="21.5" y="7.5" width="5" height="23" rx="2.5" ry="2.5" fill="#F8F9FA"/>
+  
+  <!-- Mercury column (set to ~70% for demo) -->
+  <rect x="22" y="14" width="4" height="16.5" rx="2" ry="2" fill="url(#mercuryGradient)"/>
+  
+  <!-- Thermometer bulb -->
+  <circle cx="24" cy="36" r="6" fill="url(#bulbGradient)" stroke="#BDBDBD" stroke-width="0.5"/>
+  
+  <!-- Inner bulb highlight -->
+  <circle cx="24" cy="36" r="4.5" fill="url(#mercuryGradient)"/>
+  
+  <!-- Bulb shine -->
+  <circle cx="22" cy="33" r="1.5" fill="#FFFFFF" opacity="0.4"/>
+  
+  <!-- Temperature scale markings -->
+  <g stroke="#9E9E9E" stroke-width="0.8" opacity="0.6">
+    <!-- Major marks -->
+    <line x1="28" y1="10" x2="30" y2="10"/>
+    <line x1="28" y1="15" x2="30" y2="15"/>
+    <line x1="28" y1="20" x2="30" y2="20"/>
+    <line x1="28" y1="25" x2="30" y2="25"/>
+    <line x1="28" y1="30" x2="30" y2="30"/>
+    
+    <!-- Minor marks -->
+    <line x1="28" y1="12.5" x2="29" y2="12.5"/>
+    <line x1="28" y1="17.5" x2="29" y2="17.5"/>
+    <line x1="28" y1="22.5" x2="29" y2="22.5"/>
+    <line x1="28" y1="27.5" x2="29" y2="27.5"/>
+  </g>
+  
+  <!-- Subtle shadow under thermometer -->
+  <ellipse cx="24" cy="43" rx="8" ry="2" fill="#000000" opacity="0.1"/>
+  
+  <!-- Top cap highlight -->
+  <rect x="20.5" y="6.5" width="7" height="2" rx="3.5" ry="1" fill="#FFFFFF" opacity="0.3"/>
+</svg>

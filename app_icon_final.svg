@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background container with 5% margin and rounded corners -->
+  <rect x="51.2" y="51.2" width="921.6" height="921.6" rx="180" ry="180" fill="#2E7D32"/>
+  
+  <!-- Leaf icon - scaled to 45% of container size -->
+  <g transform="translate(512, 512) scale(8, 8)">
+    <!-- Main leaf shape -->
+    <path d="M-20 -15 Q-20 -25 -10 -25 Q0 -25 10 -20 Q15 -15 18 -10 Q20 -5 20 0 Q20 5 18 10 Q15 15 10 18 Q5 20 0 20 Q-5 20 -10 18 Q-15 15 -18 10 Q-20 5 -20 0 Q-20 -5 -18 -10 Q-15 -15 -20 -15 Z" 
+          fill="#FFFFFF" 
+          stroke="none"/>
+    
+    <!-- Leaf vein - main center line -->
+    <path d="M-15 -10 Q-5 -8 0 0 Q5 8 15 12" 
+          stroke="#2E7D32" 
+          stroke-width="0.8" 
+          fill="none" 
+          stroke-linecap="round"/>
+    
+    <!-- Leaf veins - secondary lines -->
+    <path d="M-12 -5 Q-5 -2 -2 2" 
+          stroke="#2E7D32" 
+          stroke-width="0.5" 
+          fill="none" 
+          stroke-linecap="round"/>
+    
+    <path d="M-8 0 Q-2 3 2 6" 
+          stroke="#2E7D32" 
+          stroke-width="0.5" 
+          fill="none" 
+          stroke-linecap="round"/>
+    
+    <path d="M-10 5 Q-3 8 0 12" 
+          stroke="#2E7D32" 
+          stroke-width="0.5" 
+          fill="none" 
+          stroke-linecap="round"/>
+    
+    <!-- Right side veins -->
+    <path d="M2 -8 Q8 -5 12 -2" 
+          stroke="#2E7D32" 
+          stroke-width="0.5" 
+          fill="none" 
+          stroke-linecap="round"/>
+    
+    <path d="M5 -3 Q10 0 12 4" 
+          stroke="#2E7D32" 
+          stroke-width="0.5" 
+          fill="none" 
+          stroke-linecap="round"/>
+    
+    <path d="M3 2 Q8 5 10 8" 
+          stroke="#2E7D32" 
+          stroke-width="0.5" 
+          fill="none" 
+          stroke-linecap="round"/>
+  </g>
+</svg>

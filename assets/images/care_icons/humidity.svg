@@ -1,0 +1,52 @@
+<svg width="48" height="48" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+  <!-- Define gradients -->
+  <defs>
+    <radialGradient id="dropletGradient" cx="35%" cy="25%" r="70%">
+      <stop offset="0%" style="stop-color:#E1F5FE;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#42A5F5;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1976D2;stop-opacity:1" />
+    </radialGradient>
+    
+    <radialGradient id="dropletHighlight" cx="30%" cy="20%" r="40%">
+      <stop offset="0%" style="stop-color:#FFFFFF;stop-opacity:0.7" />
+      <stop offset="100%" style="stop-color:#FFFFFF;stop-opacity:0" />
+    </radialGradient>
+    
+    <linearGradient id="vaporGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#90CAF9;stop-opacity:0.8" />
+      <stop offset="100%" style="stop-color:#90CAF9;stop-opacity:0.2" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Main water droplet -->
+  <path d="M18 16 C14 22, 10 25, 10 30 C10 36, 13.5 39, 18 39 C22.5 39, 26 36, 26 30 C26 25, 22 22, 18 16 Z" fill="url(#dropletGradient)"/>
+  
+  <!-- Droplet highlight -->
+  <ellipse cx="20" cy="22" rx="4" ry="5" fill="url(#dropletHighlight)"/>
+  
+  <!-- Small droplet shine -->
+  <circle cx="21" cy="20" r="1.5" fill="#FFFFFF" opacity="0.6"/>
+  
+  <!-- Water vapor lines (curved and organic) -->
+  <!-- Top vapor line -->
+  <path d="M32 12 Q34 10, 36 12 Q38 14, 40 12" stroke="url(#vaporGradient)" stroke-width="2" stroke-linecap="round" fill="none"/>
+  
+  <!-- Middle vapor line -->
+  <path d="M30 18 Q32 16, 34 18 Q36 20, 38 18 Q40 16, 42 18" stroke="#90CAF9" stroke-width="2" stroke-linecap="round" fill="none" opacity="0.7"/>
+  
+  <!-- Lower vapor line -->
+  <path d="M32 24 Q34 22, 36 24 Q38 26, 40 24" stroke="#B0BEC5" stroke-width="1.8" stroke-linecap="round" fill="none" opacity="0.6"/>
+  
+  <!-- Additional small vapor wisps -->
+  <path d="M35 30 Q37 29, 38 30" stroke="#90CAF9" stroke-width="1.5" stroke-linecap="round" fill="none" opacity="0.5"/>
+  
+  <path d="M31 35 Q33 34, 35 35 Q37 36, 39 35" stroke="#B0BEC5" stroke-width="1.5" stroke-linecap="round" fill="none" opacity="0.4"/>
+  
+  <!-- Tiny vapor dots for extra detail -->
+  <circle cx="41" cy="15" r="0.8" fill="#90CAF9" opacity="0.5"/>
+  <circle cx="43" cy="21" r="0.6" fill="#B0BEC5" opacity="0.4"/>
+  <circle cx="40" cy="32" r="0.7" fill="#90CAF9" opacity="0.3"/>
+  
+  <!-- Small droplet sparkle -->
+  <circle cx="15" cy="26" r="0.8" fill="#FFFFFF" opacity="0.5"/>
+</svg>

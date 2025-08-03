@@ -1,0 +1,90 @@
+<svg width="80" height="80" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+  <!-- Define luxury gradients -->
+  <defs>
+    <radialGradient id="goldGradient" cx="30%" cy="20%" r="80%">
+      <stop offset="0%" style="stop-color:#FFD700;stop-opacity:1" />
+      <stop offset="40%" style="stop-color:#FFA000;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#FF8F00;stop-opacity:1" />
+    </radialGradient>
+    
+    <radialGradient id="innerGradient" cx="30%" cy="30%" r="70%">
+      <stop offset="0%" style="stop-color:#FFFFFF;stop-opacity:0.9" />
+      <stop offset="30%" style="stop-color:#8BC34A;stop-opacity:0.1" />
+      <stop offset="100%" style="stop-color:#2E7D32;stop-opacity:0.8" />
+    </radialGradient>
+    
+    <linearGradient id="leafShine1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#C8E6C9;stop-opacity:1" />
+      <stop offset="30%" style="stop-color:#8BC34A;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#2E7D32;stop-opacity:1" />
+    </linearGradient>
+    
+    <linearGradient id="leafShine2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#A5D6A7;stop-opacity:1" />
+      <stop offset="30%" style="stop-color:#66BB6A;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#388E3C;stop-opacity:1" />
+    </linearGradient>
+    
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+      <feMerge> 
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    
+    <filter id="innerShadow">
+      <feOffset dx="0" dy="1"/>
+      <feGaussianBlur stdDeviation="1" result="offset-blur"/>
+      <feComposite operator="out" in="SourceGraphic" in2="offset-blur" result="inverse"/>
+      <feFlood flood-color="#000000" flood-opacity="0.2"/>
+      <feComposite operator="in" in2="inverse"/>
+      <feComposite operator="over" in2="SourceGraphic"/>
+    </filter>
+  </defs>
+  
+  <!-- Outer glow ring -->
+  <circle cx="40" cy="40" r="38" fill="url(#goldGradient)" opacity="0.3" filter="url(#glow)"/>
+  
+  <!-- Main golden ring -->
+  <circle cx="40" cy="40" r="35" fill="none" stroke="url(#goldGradient)" stroke-width="4"/>
+  
+  <!-- Inner golden accent ring -->
+  <circle cx="40" cy="40" r="31" fill="none" stroke="#FFD700" stroke-width="1" opacity="0.8"/>
+  
+  <!-- Premium inner background -->
+  <circle cx="40" cy="40" r="28" fill="url(#innerGradient)" filter="url(#innerShadow)"/>
+  
+  <!-- Luxury highlight arc -->
+  <path d="M 15 25 A 25 25 0 0 1 65 25" stroke="#FFFFFF" stroke-width="2" fill="none" opacity="0.6"/>
+  
+  <!-- Premium seedling stem with shine -->
+  <line x1="40" y1="50" x2="40" y2="33" stroke="#2E7D32" stroke-width="3" stroke-linecap="round"/>
+  <line x1="40.5" y1="49" x2="40.5" y2="34" stroke="#4CAF50" stroke-width="1" stroke-linecap="round" opacity="0.7"/>
+  
+  <!-- Luxury left leaf with shine -->
+  <ellipse cx="31" cy="30" rx="8" ry="5" fill="url(#leafShine1)" transform="rotate(-35 31 30)"/>
+  <ellipse cx="29" cy="28" rx="3" ry="2" fill="#FFFFFF" opacity="0.4" transform="rotate(-35 29 28)"/>
+  
+  <!-- Luxury right leaf with shine -->
+  <ellipse cx="49" cy="30" rx="8" ry="5" fill="url(#leafShine2)" transform="rotate(35 49 30)"/>
+  <ellipse cx="51" cy="28" rx="3" ry="2" fill="#FFFFFF" opacity="0.4" transform="rotate(35 51 28)"/>
+  
+  <!-- Premium leaf veins -->
+  <line x1="27" y1="30" x2="35" y2="30" stroke="#1B5E20" stroke-width="0.8" opacity="0.8" transform="rotate(-35 31 30)"/>
+  <line x1="45" y1="30" x2="53" y2="30" stroke="#1B5E20" stroke-width="0.8" opacity="0.8" transform="rotate(35 49 30)"/>
+  
+  <!-- Luxury sparkles -->
+  <g fill="#FFD700" opacity="0.9">
+    <polygon points="50,22 51,24 53,24 51.5,25.5 52,28 50,26.5 48,28 48.5,25.5 47,24 49,24" />
+    <polygon points="30,24 30.5,25 32,25 31,26 31.3,27.5 30,26.8 28.7,27.5 29,26 28,25 29.5,25" />
+  </g>
+  
+  <!-- Premium shine highlights -->
+  <circle cx="35" cy="20" r="1.5" fill="#FFFFFF" opacity="0.8"/>
+  <circle cx="45" cy="18" r="1" fill="#FFD700" opacity="0.9"/>
+  <circle cx="25" cy="35" r="0.8" fill="#FFFFFF" opacity="0.6"/>
+  
+  <!-- Luxury center highlight -->
+  <circle cx="40" cy="15" r="3" fill="url(#goldGradient)" opacity="0.6" filter="url(#glow)"/>
+</svg>

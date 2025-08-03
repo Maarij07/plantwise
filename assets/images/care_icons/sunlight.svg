@@ -1,0 +1,52 @@
+<svg width="48" height="48" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+  <!-- Define gradients -->
+  <defs>
+    <radialGradient id="sunGradient" cx="30%" cy="20%" r="80%">
+      <stop offset="0%" style="stop-color:#FFF59D;stop-opacity:1" />
+      <stop offset="60%" style="stop-color:#FFD54F;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#FFB74D;stop-opacity:1" />
+    </radialGradient>
+    
+    <linearGradient id="rayGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFD54F;stop-opacity:0.8" />
+      <stop offset="100%" style="stop-color:#FFB74D;stop-opacity:0.4" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Sun rays (gentle and rounded) -->
+  <!-- Top ray -->
+  <rect x="22.5" y="2" width="3" height="8" rx="1.5" ry="1.5" fill="url(#rayGradient)"/>
+  
+  <!-- Top-right ray -->
+  <rect x="32.5" y="5.5" width="3" height="7" rx="1.5" ry="1.5" fill="url(#rayGradient)" transform="rotate(45 34 9)"/>
+  
+  <!-- Right ray -->
+  <rect x="38" y="22.5" width="8" height="3" rx="1.5" ry="1.5" fill="url(#rayGradient)"/>
+  
+  <!-- Bottom-right ray -->
+  <rect x="32.5" y="35.5" width="3" height="7" rx="1.5" ry="1.5" fill="url(#rayGradient)" transform="rotate(135 34 39)"/>
+  
+  <!-- Bottom ray -->
+  <rect x="22.5" y="38" width="3" height="8" rx="1.5" ry="1.5" fill="url(#rayGradient)"/>
+  
+  <!-- Bottom-left ray -->
+  <rect x="12.5" y="35.5" width="3" height="7" rx="1.5" ry="1.5" fill="url(#rayGradient)" transform="rotate(225 14 39)"/>
+  
+  <!-- Left ray -->
+  <rect x="2" y="22.5" width="8" height="3" rx="1.5" ry="1.5" fill="url(#rayGradient)"/>
+  
+  <!-- Top-left ray -->
+  <rect x="12.5" y="5.5" width="3" height="7" rx="1.5" ry="1.5" fill="url(#rayGradient)" transform="rotate(315 14 9)"/>
+  
+  <!-- Main sun circle -->
+  <circle cx="24" cy="24" r="12" fill="url(#sunGradient)"/>
+  
+  <!-- Gentle highlight on sun -->
+  <circle cx="26" cy="20" r="4" fill="#FFFFFF" opacity="0.3"/>
+  
+  <!-- Small shine spot -->
+  <circle cx="28" cy="18" r="1.5" fill="#FFFFFF" opacity="0.6"/>
+  
+  <!-- Warm glow effect -->
+  <circle cx="24" cy="24" r="14" fill="url(#rayGradient)" opacity="0.1"/>
+</svg>

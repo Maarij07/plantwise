@@ -1,0 +1,52 @@
+<svg width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+  <!-- Simple ceramic pot in natural hues -->
+  <ellipse cx="60" cy="92" rx="24" ry="6" fill="#D7CCC8"/>
+  <rect x="36" y="75" width="48" height="17" fill="#F5F5DC" rx="2"/>
+  <ellipse cx="60" cy="75" rx="24" ry="6" fill="#F8F9FA"/>
+  
+  <!-- Pot rim -->
+  <ellipse cx="60" cy="73" rx="26" ry="7" fill="none" stroke="#D7CCC8" stroke-width="1.5"/>
+  
+  <!-- Soil -->
+  <ellipse cx="60" cy="76" rx="20" ry="4" fill="#8D6E63"/>
+  
+  <!-- Main stems -->
+  <line x1="60" y1="76" x2="60" y2="45" stroke="#2E7D32" stroke-width="2" stroke-linecap="round"/>
+  <line x1="60" y1="65" x2="45" y2="50" stroke="#2E7D32" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="60" y1="65" x2="75" y2="55" stroke="#2E7D32" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="60" y1="55" x2="50" y2="40" stroke="#2E7D32" stroke-width="1" stroke-linecap="round"/>
+  <line x1="60" y1="55" x2="70" y2="45" stroke="#2E7D32" stroke-width="1" stroke-linecap="round"/>
+  
+  <!-- Basil leaves - characteristic oval shape with pointed tips -->
+  <!-- Main stem leaves (largest) -->
+  <path d="M 60,40 Q 55,35 55,28 Q 60,25 65,28 Q 65,35 60,40 Z" fill="#8BC34A"/>
+  <path d="M 60,50 Q 54,45 54,37 Q 60,34 66,37 Q 66,45 60,50 Z" fill="#2E7D32"/>
+  <path d="M 60,35 Q 56,31 56,25 Q 60,22 64,25 Q 64,31 60,35 Z" fill="#8BC34A"/>
+  
+  <!-- Left branch leaves -->
+  <path d="M 45,48 Q 41,44 41,38 Q 45,35 49,38 Q 49,44 45,48 Z" fill="#8BC34A"/>
+  <path d="M 48,42 Q 45,39 45,34 Q 48,32 51,34 Q 51,39 48,42 Z" fill="#2E7D32"/>
+  <path d="M 42,52 Q 39,49 39,45 Q 42,43 45,45 Q 45,49 42,52 Z" fill="#2E7D32"/>
+  
+  <!-- Right branch leaves -->
+  <path d="M 75,53 Q 79,49 79,43 Q 75,40 71,43 Q 71,49 75,53 Z" fill="#8BC34A"/>
+  <path d="M 72,47 Q 75,44 75,39 Q 72,37 69,39 Q 69,44 72,47 Z" fill="#2E7D32"/>
+  <path d="M 78,57 Q 81,54 81,50 Q 78,48 75,50 Q 75,54 78,57 Z" fill="#2E7D32"/>
+  
+  <!-- Upper branch leaves -->
+  <path d="M 50,38 Q 47,35 47,30 Q 50,28 53,30 Q 53,35 50,38 Z" fill="#8BC34A"/>
+  <path d="M 70,43 Q 73,40 73,35 Q 70,33 67,35 Q 67,40 70,43 Z" fill="#8BC34A"/>
+  <path d="M 52,32 Q 50,30 50,27 Q 52,26 54,27 Q 54,30 52,32 Z" fill="#2E7D32"/>
+  <path d="M 68,37 Q 70,35 70,32 Q 68,31 66,32 Q 66,35 68,37 Z" fill="#2E7D32"/>
+  
+  <!-- Small young leaves at tips -->
+  <path d="M 60,22 Q 58,20 58,17 Q 60,16 62,17 Q 62,20 60,22 Z" fill="#8BC34A"/>
+  <path d="M 47,28 Q 45,26 45,24 Q 47,23 49,24 Q 49,26 47,28 Z" fill="#8BC34A"/>
+  <path d="M 73,33 Q 75,31 75,29 Q 73,28 71,29 Q 71,31 73,33 Z" fill="#8BC34A"/>
+  
+  <!-- Subtle leaf veins for basil texture -->
+  <line x1="60" y1="25" x2="60" y2="35" stroke="#2E7D32" stroke-width="0.3" opacity="0.6"/>
+  <line x1="60" y1="34" x2="60" y2="45" stroke="#1B5E20" stroke-width="0.3" opacity="0.6"/>
+  <line x1="45" y1="35" x2="45" y2="43" stroke="#1B5E20" stroke-width="0.3" opacity="0.6"/>
+  <line x1="75" y1="40" x2="75" y2="48" stroke="#1B5E20" stroke-width="0.3" opacity="0.6"/>
+</svg>

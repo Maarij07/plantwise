@@ -1,0 +1,24 @@
+**Improved Small Indoor Tree Prompt:**
+
+```
+Create a flat vector illustration of a small indoor bonsai-style tree or ficus plant in a decorative ceramic pot for the PlantWise app. The tree should have a thin brown trunk with gentle curves and a full, rounded canopy of leaves in Primary Green (#2E7D32) and Secondary Green (#8BC34A). The pot should be terracotta colored with simple geometric patterns or bands. Size 120x120 pixels with transparent background. Style: minimalist flat design, friendly and approachable, smooth organic shapes, no shadows or 3D effects. The tree should look healthy and well-proportioned within the pot. Provide as SVG format.
+```
+ 
+**Alternative variations to try:**
+
+**Version 2 - More specific tree type:**
+```
+Design a flat vector small indoor rubber plant (Ficus elastica) with 6-8 oval leaves in a modern ceramic pot. Tree has dark brown trunk, glossy green leaves (#2E7D32, #8BC34A). Terracotta pot with subtle ribbed texture. Size 120x120 pixels, transparent background. Minimalist, clean, friendly style. SVG format.
+```
+
+**Version 3 - Different tree style:**
+```
+Create a flat vector small indoor money tree (Pachira aquatica) with braided trunk and palmate leaves in decorative pot for PlantWise. Use natural browns for trunk, vibrant greens for leaves. Modern terracotta pot with simple band decoration. 120x120 pixels, transparent background, flat minimalist style. SVG preferred.
+```
+
+**Tips for better tree generation:**
+- Specify exact tree type (bonsai, ficus, money tree, etc.)
+- Mention leaf arrangement (rounded canopy, palmate, oval leaves)
+- Describe trunk characteristics (thin, braided, curved)
+- Be specific about proportions (tree should fit well in pot)
+- Mention that leaves should look full but not overcrowded

@@ -1,0 +1,83 @@
+<svg width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+  <!-- Light ceramic pot -->
+  <ellipse cx="60" cy="95" rx="26" ry="7" fill="#E8E8E8"/>
+  <rect x="34" y="75" width="52" height="20" fill="#F8F9FA" rx="3"/>
+  <ellipse cx="60" cy="75" rx="26" ry="7" fill="#FFFFFF"/>
+  
+  <!-- Pot rim -->
+  <ellipse cx="60" cy="73" rx="28" ry="8" fill="none" stroke="#E0E0E0" stroke-width="2"/>
+  
+  <!-- Soil -->
+  <ellipse cx="60" cy="77" rx="22" ry="5" fill="#8D6E63"/>
+  
+  <!-- Plant stems -->
+  <line x1="60" y1="77" x2="45" y2="45" stroke="#2E7D32" stroke-width="2" stroke-linecap="round"/>
+  <line x1="60" y1="77" x2="60" y2="35" stroke="#2E7D32" stroke-width="2" stroke-linecap="round"/>
+  <line x1="60" y1="77" x2="75" y2="50" stroke="#2E7D32" stroke-width="2" stroke-linecap="round"/>
+  <line x1="60" y1="77" x2="38" y2="60" stroke="#2E7D32" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="60" y1="77" x2="82" y2="65" stroke="#2E7D32" stroke-width="1.5" stroke-linecap="round"/>
+  
+  <!-- Leaves -->
+  <ellipse cx="42" cy="50" rx="5" ry="8" fill="#8BC34A" transform="rotate(-25 42 50)"/>
+  <ellipse cx="58" cy="45" rx="4" ry="7" fill="#2E7D32" transform="rotate(-10 58 45)"/>
+  <ellipse cx="78" cy="55" rx="5" ry="8" fill="#8BC34A" transform="rotate(30 78 55)"/>
+  <ellipse cx="35" cy="65" rx="4" ry="6" fill="#2E7D32" transform="rotate(-40 35 65)"/>
+  <ellipse cx="85" cy="70" rx="4" ry="6" fill="#8BC34A" transform="rotate(35 85 70)"/>
+  <ellipse cx="52" cy="60" rx="3" ry="5" fill="#8BC34A" transform="rotate(-15 52 60)"/>
+  <ellipse cx="68" cy="65" rx="3" ry="5" fill="#2E7D32" transform="rotate(20 68 65)"/>
+  
+  <!-- Pink flowers -->
+  <g transform="translate(60, 30)">
+    <!-- Large center flower -->
+    <circle cx="0" cy="-2" r="3" fill="#F8BBD9" transform="rotate(0)"/>
+    <circle cx="0" cy="-2" r="3" fill="#F8BBD9" transform="rotate(72)"/>
+    <circle cx="0" cy="-2" r="3" fill="#F8BBD9" transform="rotate(144)"/>
+    <circle cx="0" cy="-2" r="3" fill="#F8BBD9" transform="rotate(216)"/>
+    <circle cx="0" cy="-2" r="3" fill="#F8BBD9" transform="rotate(288)"/>
+    <circle cx="0" cy="0" r="2" fill="#E91E63"/>
+  </g>
+  
+  <g transform="translate(45, 40)">
+    <!-- Medium flower -->
+    <circle cx="0" cy="-1.5" r="2.5" fill="#F8BBD9" transform="rotate(36)"/>
+    <circle cx="0" cy="-1.5" r="2.5" fill="#F8BBD9" transform="rotate(108)"/>
+    <circle cx="0" cy="-1.5" r="2.5" fill="#F8BBD9" transform="rotate(180)"/>
+    <circle cx="0" cy="-1.5" r="2.5" fill="#F8BBD9" transform="rotate(252)"/>
+    <circle cx="0" cy="-1.5" r="2.5" fill="#F8BBD9" transform="rotate(324)"/>
+    <circle cx="0" cy="0" r="1.5" fill="#E91E63"/>
+  </g>
+  
+  <g transform="translate(75, 45)">
+    <!-- Medium flower -->
+    <circle cx="0" cy="-1.5" r="2.5" fill="#FFF59D" transform="rotate(0)"/>
+    <circle cx="0" cy="-1.5" r="2.5" fill="#FFF59D" transform="rotate(72)"/>
+    <circle cx="0" cy="-1.5" r="2.5" fill="#FFF59D" transform="rotate(144)"/>
+    <circle cx="0" cy="-1.5" r="2.5" fill="#FFF59D" transform="rotate(216)"/>
+    <circle cx="0" cy="-1.5" r="2.5" fill="#FFF59D" transform="rotate(288)"/>
+    <circle cx="0" cy="0" r="1.5" fill="#FFD54F"/>
+  </g>
+  
+  <!-- Small flowers -->
+  <g transform="translate(50, 50)">
+    <circle cx="0" cy="-1" r="1.5" fill="#FFF59D" transform="rotate(30)"/>
+    <circle cx="0" cy="-1" r="1.5" fill="#FFF59D" transform="rotate(120)"/>
+    <circle cx="0" cy="-1" r="1.5" fill="#FFF59D" transform="rotate(210)"/>
+    <circle cx="0" cy="-1" r="1.5" fill="#FFF59D" transform="rotate(300)"/>
+    <circle cx="0" cy="0" r="1" fill="#FFD54F"/>
+  </g>
+  
+  <g transform="translate(70, 60)">
+    <circle cx="0" cy="-1" r="1.5" fill="#F8BBD9" transform="rotate(45)"/>
+    <circle cx="0" cy="-1" r="1.5" fill="#F8BBD9" transform="rotate(135)"/>
+    <circle cx="0" cy="-1" r="1.5" fill="#F8BBD9" transform="rotate(225)"/>
+    <circle cx="0" cy="-1" r="1.5" fill="#F8BBD9" transform="rotate(315)"/>
+    <circle cx="0" cy="0" r="1" fill="#E91E63"/>
+  </g>
+  
+  <!-- Tiny bud flowers -->
+  <circle cx="40" cy="55" r="1.5" fill="#F8BBD9"/>
+  <circle cx="40" cy="55" r="0.8" fill="#E91E63"/>
+  
+  <circle cx="80" cy="58" r="1.5" fill="#FFF59D"/>
+  <circle cx="80" cy="58" r="0.8" fill="#FFD54F"/>
+</svg>
