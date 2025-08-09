@@ -3,6 +3,9 @@ import 'package:go_router/go_router.dart';
 import '../../../../config/theme/app_theme.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../profile/presentation/screens/profile_screen.dart';
+import '../../../plants/presentation/screens/my_plants_screen.dart';
+import '../../../community/presentation/screens/community_screen.dart';
+import '../../../notifications/presentation/screens/notifications_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -46,8 +49,8 @@ class _HomeScreenState extends State<HomeScreen> {
         onPageChanged: _onPageChanged,
         children: const [
           _DashboardTab(),
-          _MyPlantsTab(),
-          _CommunityTab(),
+          MyPlantsScreen(),
+          CommunityScreen(),
           ProfileScreen(),
         ],
       ),
@@ -94,7 +97,12 @@ class _DashboardTab extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.notifications_outlined),
-            onPressed: () {},
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => const NotificationsScreen(),
+              ),
+            ),
           ),
           IconButton(
             icon: const Icon(Icons.logout),
@@ -297,44 +305,4 @@ class _TaskCard extends StatelessWidget {
   }
 }
 
-class _MyPlantsTab extends StatelessWidget {
-  const _MyPlantsTab();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('My Plants'),
-        automaticallyImplyLeading: false,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () {},
-          ),
-        ],
-      ),
-      body: const Center(
-        child: Text('My Plants content will go here'),
-      ),
-    );
-  }
-}
-
-class _CommunityTab extends StatelessWidget {
-  const _CommunityTab();
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Community'),
-        automaticallyImplyLeading: false,
-      ),
-      body: const Center(
-        child: Text('Community content will go here'),
-      ),
-    );
-  }
-}
-
-// _ProfileTab removed - using actual ProfileScreen instead
+// Old placeholder tabs removed - now using actual screens

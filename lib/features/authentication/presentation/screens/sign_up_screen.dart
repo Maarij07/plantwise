@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../config/theme/app_theme.dart';
 import '../../../../core/constants/app_constants.dart';
-import '../../../profile/presentation/providers/land_size_provider.dart';
 import '../../../profile/presentation/widgets/land_size_setup_dialog.dart';
 
 class SignUpScreen extends ConsumerStatefulWidget {
