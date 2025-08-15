@@ -300,7 +300,7 @@ class _AddPlantScreenState extends ConsumerState<AddPlantScreen> {
           value: type,
           child: Row(
             children: [
-              Icon(type.icon, size: 20, color: type.color),
+              Icon(type.icon, size: 20, color: AppColors.primary),
               const SizedBox(width: 8),
               Text(type.displayName),
             ],

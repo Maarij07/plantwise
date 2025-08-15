@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'community_post.freezed.dart';
@@ -99,6 +100,38 @@ extension CommunityCommentExtension on CommunityComment {
       return '${difference.inHours}h ago';
     } else {
       return '${difference.inDays}d ago';
+    }
+  }
+}
+
+extension PostTypeExtension on PostType {
+  Color get color {
+    switch (this) {
+      case PostType.general:
+        return const Color(0xFF6B7280); // Grey 500
+      case PostType.question:
+        return const Color(0xFF3B82F6); // Blue 500
+      case PostType.tip:
+        return const Color(0xFF10B981); // Emerald 500
+      case PostType.showcase:
+        return const Color(0xFF8B5CF6); // Violet 500
+      case PostType.help:
+        return const Color(0xFFF59E0B); // Amber 500
+    }
+  }
+
+  IconData get icon {
+    switch (this) {
+      case PostType.general:
+        return Icons.chat;
+      case PostType.question:
+        return Icons.help_outline;
+      case PostType.tip:
+        return Icons.lightbulb_outline;
+      case PostType.showcase:
+        return Icons.photo_camera;
+      case PostType.help:
+        return Icons.support_agent;
     }
   }
 }

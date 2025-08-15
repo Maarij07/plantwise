@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../config/theme/app_theme.dart';
 import '../../../../core/constants/app_constants.dart';
@@ -6,6 +7,7 @@ import '../../../profile/presentation/screens/profile_screen.dart';
 import '../../../plants/presentation/screens/my_plants_screen.dart';
 import '../../../community/presentation/screens/community_screen.dart';
 import '../../../notifications/presentation/screens/notifications_screen.dart';
+import '../../../reminders/presentation/providers/reminders_provider.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});

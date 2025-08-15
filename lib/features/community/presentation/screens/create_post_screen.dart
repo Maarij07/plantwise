@@ -214,25 +214,27 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
 
   Widget _buildPostTypeDropdown() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
       decoration: BoxDecoration(
-        color: _selectedPostType.color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(16),
+        color: _selectedPostType.color.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: _selectedPostType.color.withOpacity(0.3),
+          color: _selectedPostType.color.withOpacity(0.2),
+          width: 1.5,
         ),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<PostType>(
           value: _selectedPostType,
           icon: Icon(
-            Icons.arrow_drop_down,
+            Icons.keyboard_arrow_down_rounded,
             color: _selectedPostType.color,
-            size: 16,
+            size: 18,
           ),
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
             color: _selectedPostType.color,
-            fontWeight: FontWeight.w500,
+            fontWeight: FontWeight.w600,
+            fontSize: 13,
           ),
           items: PostType.values.map((type) {
             return DropdownMenuItem(
@@ -240,13 +242,27 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(
-                    type.icon,
-                    size: 16,
-                    color: type.color,
+                  Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: type.color.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(
+                      type.icon,
+                      size: 14,
+                      color: type.color,
+                    ),
                   ),
-                  const SizedBox(width: 6),
-                  Text(type.displayName),
+                  const SizedBox(width: 8),
+                  Text(
+                    type.displayName,
+                    style: TextStyle(
+                      color: type.color,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                    ),
+                  ),
                 ],
               ),
             );
@@ -303,26 +319,57 @@ class _CreatePostScreenState extends ConsumerState<CreatePostScreen> {
   }
 
   Widget _buildActionButtons() {
-    return Row(
-      children: [
-        _ActionChip(
-          icon: Icons.photo_camera,
-          label: 'Camera',
-          onTap: () => _pickImage(ImageSource.camera),
-        ),
-        const SizedBox(width: 12),
-        _ActionChip(
-          icon: Icons.photo_library,
-          label: 'Gallery',
-          onTap: () => _pickImage(ImageSource.gallery),
-        ),
-        const SizedBox(width: 12),
-        _ActionChip(
-          icon: Icons.location_on,
-          label: 'Location',
-          onTap: () => _showLocationDialog(),
-        ),
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxWidth < 400) {
+          // Stack vertically on small screens
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _ActionChip(
+                icon: Icons.photo_camera,
+                label: 'Camera',
+                onTap: () => _pickImage(ImageSource.camera),
+              ),
+              const SizedBox(height: 8),
+              _ActionChip(
+                icon: Icons.photo_library,
+                label: 'Gallery',
+                onTap: () => _pickImage(ImageSource.gallery),
+              ),
+              const SizedBox(height: 8),
+              _ActionChip(
+                icon: Icons.location_on,
+                label: 'Location',
+                onTap: () => _showLocationDialog(),
+              ),
+            ],
+          );
+        }
+        
+        // Horizontal layout for larger screens
+        return Wrap(
+          spacing: 12,
+          runSpacing: 8,
+          children: [
+            _ActionChip(
+              icon: Icons.photo_camera,
+              label: 'Camera',
+              onTap: () => _pickImage(ImageSource.camera),
+            ),
+            _ActionChip(
+              icon: Icons.photo_library,
+              label: 'Gallery',
+              onTap: () => _pickImage(ImageSource.gallery),
+            ),
+            _ActionChip(
+              icon: Icons.location_on,
+              label: 'Location',
+              onTap: () => _showLocationDialog(),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -472,69 +519,50 @@ class _ActionChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(20),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        decoration: BoxDecoration(
-          color: AppColors.grey100,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: AppColors.grey300),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              icon,
-              size: 18,
-              color: AppColors.primary,
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(25),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          decoration: BoxDecoration(
+            color: AppColors.primary.withOpacity(0.08),
+            borderRadius: BorderRadius.circular(25),
+            border: Border.all(
+              color: AppColors.primary.withOpacity(0.2),
+              width: 1.5,
             ),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: const TextStyle(
-                color: AppColors.primary,
-                fontWeight: FontWeight.w500,
-                fontSize: 14,
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  icon,
+                  size: 16,
+                  color: AppColors.primary,
+                ),
               ),
-            ),
-          ],
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: const TextStyle(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
-// Extension to add colors and icons to PostType
-extension PostTypeExtension on PostType {
-  Color get color {
-    switch (this) {
-      case PostType.general:
-        return AppColors.grey700;
-      case PostType.question:
-        return AppColors.info;
-      case PostType.tip:
-        return AppColors.secondary;
-      case PostType.showcase:
-        return AppColors.primary;
-      case PostType.help:
-        return AppColors.warning;
-    }
-  }
-
-  IconData get icon {
-    switch (this) {
-      case PostType.general:
-        return Icons.chat;
-      case PostType.question:
-        return Icons.help_outline;
-      case PostType.tip:
-        return Icons.lightbulb_outline;
-      case PostType.showcase:
-        return Icons.photo_camera;
-      case PostType.help:
-        return Icons.support_agent;
-    }
-  }
-}
