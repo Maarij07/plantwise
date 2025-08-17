@@ -10,6 +10,8 @@ import '../../features/authentication/presentation/screens/sign_up_screen.dart';
 import '../../features/authentication/presentation/screens/forgot_password_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/admin/presentation/screens/admin_screen.dart';
+import '../../features/profile/presentation/screens/edit_profile_screen.dart';
+import '../../features/profile/presentation/screens/change_password_screen.dart';
 import '../../core/constants/app_constants.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
@@ -57,6 +59,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: AppConstants.adminRoute,
         name: 'admin',
         builder: (context, state) => const AdminScreen(),
+      ),
+      
+      // Profile Routes
+      GoRoute(
+        path: '/edit-profile',
+        name: 'editProfile',
+        builder: (context, state) => const EditProfileScreen(),
+      ),
+      GoRoute(
+        path: '/change-password',
+        name: 'changePassword',
+        builder: (context, state) => const ChangePasswordScreen(),
       ),
     ],
     errorBuilder: (context, state) => Scaffold(
