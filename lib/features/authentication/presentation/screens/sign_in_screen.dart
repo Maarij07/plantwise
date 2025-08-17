@@ -1,21 +1,24 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import '../../../../config/theme/app_theme.dart';
 import '../../../../core/constants/app_constants.dart';
+import '../providers/auth_providers.dart';
+import '../providers/auth_state.dart';
+import '../widgets/custom_input_field.dart';
+import '../widgets/custom_button.dart';
 
-class SignInScreen extends StatefulWidget {
+class SignInScreen extends ConsumerStatefulWidget {
   const SignInScreen({super.key});
 
   @override
-  State<SignInScreen> createState() => _SignInScreenState();
+  ConsumerState<SignInScreen> createState() => _SignInScreenState();
 }
 
-class _SignInScreenState extends State<SignInScreen> {
+class _SignInScreenState extends ConsumerState<SignInScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  bool _isPasswordVisible = false;
-  bool _isLoading = false;
+  bool _rememberMe = false;
 
   @override
   void dispose() {
@@ -24,265 +27,283 @@ class _SignInScreenState extends State<SignInScreen> {
     super.dispose();
   }
 
-  void _togglePasswordVisibility() {
-    setState(() {
-      _isPasswordVisible = !_isPasswordVisible;
-    });
-  }
-
-  Future<void> _signIn() async {
-    if (_formKey.currentState?.validate() ?? false) {
-      setState(() {
-        _isLoading = true;
-      });
-
-      // Simulate loading
-      await Future.delayed(const Duration(seconds: 1));
-
-      // Check for admin credentials
-      final email = _emailController.text.trim();
-      final password = _passwordController.text.trim();
-
-      if (email == AppConstants.adminEmail && password == AppConstants.adminPassword) {
-        // Navigate to admin screen
-        if (mounted) {
-          context.go(AppConstants.adminRoute);
-        }
-      } else {
-        // Navigate to user home screen
-        if (mounted) {
-          context.go(AppConstants.homeRoute);
-        }
-      }
-
-      setState(() {
-        _isLoading = false;
-      });
+  String? _validateEmail(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Email is required';
     }
+    if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
+      return 'Please enter a valid email';
+    }
+    return null;
   }
 
-  void _navigateToSignUp() {
-    context.go(AppConstants.signUpRoute);
+  String? _validatePassword(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Password is required';
+    }
+    if (value.length < 6) {
+      return 'Password must be at least 6 characters';
+    }
+    return null;
   }
 
-  void _navigateToForgotPassword() {
-    context.go(AppConstants.forgotPasswordRoute);
+  void _signIn() {
+    if (_formKey.currentState!.validate()) {
+      final email = _emailController.text.trim();
+      final password = _passwordController.text;
+      
+      // Check for admin credentials first
+      if (email == AppConstants.adminEmail && password == AppConstants.adminPassword) {
+        context.go(AppConstants.adminRoute);
+        return;
+      }
+      
+      // Use Firebase authentication for regular users
+      ref.read(authNotifierProvider.notifier).signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final authState = ref.watch(authStateProvider);
+    final theme = Theme.of(context);
+
+    // Listen to auth state changes
+    ref.listen<AuthState>(authStateProvider, (previous, next) {
+      next.when(
+        initial: () {},
+        loading: () {},
+        authenticated: (user) {
+          // Navigate to home screen on successful authentication
+          context.go(AppConstants.homeRoute);
+        },
+        unauthenticated: () {},
+        error: (message) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(message),
+              backgroundColor: theme.colorScheme.error,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+          // Clear error after showing
+          Future.delayed(const Duration(milliseconds: 100), () {
+            ref.read(authNotifierProvider.notifier).clearError();
+          });
+        },
+        passwordResetSent: () {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Password reset email sent'),
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        },
+      );
+    });
+
     return Scaffold(
-      backgroundColor: AppColors.background,
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(AppConstants.paddingLarge),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const SizedBox(height: 40),
-
-              // Logo and Welcome
-              Column(
-                children: [
-                  Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      color: AppColors.primary,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: const Icon(
-                      Icons.eco,
-                      size: 40,
-                      color: AppColors.onPrimary,
-                    ),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: AppConstants.paddingXLarge),
+                
+                // Header
+                Text(
+                  'Welcome Back!',
+                  style: theme.textTheme.headlineMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.onSurface,
                   ),
-                  
-                  const SizedBox(height: 24),
-                  
-                  Text(
-                    'Welcome Back!',
-                    style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.onBackground,
-                    ),
+                ),
+                const SizedBox(height: AppConstants.paddingSmall),
+                Text(
+                  'Sign in to continue your plant care journey',
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    color: theme.colorScheme.onSurface.withOpacity(0.7),
                   ),
-                  
-                  const SizedBox(height: 8),
-                  
-                  Text(
-                    'Sign in to continue your plant care journey',
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: AppColors.grey600,
-                    ),
-                    textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: AppConstants.paddingXLarge * 1.5),
+
+                // Email Field
+                CustomInputField(
+                  label: 'Email',
+                  hintText: 'Enter your email',
+                  controller: _emailController,
+                  keyboardType: TextInputType.emailAddress,
+                  textInputAction: TextInputAction.next,
+                  validator: _validateEmail,
+                  prefixIcon: Icon(
+                    Icons.email_outlined,
+                    color: theme.colorScheme.onSurface.withOpacity(0.6),
                   ),
-                ],
-              ),
+                ),
+                const SizedBox(height: AppConstants.paddingLarge),
 
-              const SizedBox(height: 48),
+                // Password Field
+                CustomInputField(
+                  label: 'Password',
+                  hintText: 'Enter your password',
+                  controller: _passwordController,
+                  obscureText: true,
+                  textInputAction: TextInputAction.done,
+                  validator: _validatePassword,
+                  prefixIcon: Icon(
+                    Icons.lock_outline,
+                    color: theme.colorScheme.onSurface.withOpacity(0.6),
+                  ),
+                ),
+                const SizedBox(height: AppConstants.paddingMedium),
 
-              // Sign In Form
-              Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                // Remember Me & Forgot Password
+                Row(
                   children: [
-                    // Email Field
-                    TextFormField(
-                      controller: _emailController,
-                      keyboardType: TextInputType.emailAddress,
-                      style: const TextStyle(color: Colors.black),
-                      decoration: const InputDecoration(
-                        labelText: 'Email',
-                        prefixIcon: Icon(Icons.email_outlined),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter your email';
-                        }
-                        if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(value)) {
-                          return 'Please enter a valid email';
-                        }
-                        return null;
+                    Checkbox(
+                      value: _rememberMe,
+                      onChanged: (value) {
+                        setState(() {
+                          _rememberMe = value ?? false;
+                        });
                       },
                     ),
-
-                    const SizedBox(height: 16),
-
-                    // Password Field
-                    TextFormField(
-                      controller: _passwordController,
-                      obscureText: !_isPasswordVisible,
-                      style: const TextStyle(color: Colors.black),
-                      decoration: InputDecoration(
-                        labelText: 'Password',
-                        prefixIcon: const Icon(Icons.lock_outline),
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
-                          ),
-                          onPressed: _togglePasswordVisibility,
-                        ),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter your password';
-                        }
-                        if (value.length < 6) {
-                          return 'Password must be at least 6 characters';
-                        }
-                        return null;
+                    Text(
+                      'Remember me',
+                      style: theme.textTheme.bodyMedium,
+                    ),
+                    const Spacer(),
+                    TextButton(
+                      onPressed: () {
+                        context.push(AppConstants.forgotPasswordRoute);
                       },
-                    ),
-
-                    const SizedBox(height: 8),
-
-                    // Forgot Password
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        TextButton(
-                          onPressed: _navigateToForgotPassword,
-                          child: const Text('Forgot Password?'),
+                      child: Text(
+                        'Forgot Password?',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.primary,
+                          fontWeight: FontWeight.w600,
                         ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    // Sign In Button
-                    SizedBox(
-                      height: 52,
-                      child: ElevatedButton(
-                        onPressed: _isLoading ? null : _signIn,
-                        child: _isLoading
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(
-                                    AppColors.onPrimary,
-                                  ),
-                                ),
-                              )
-                            : const Text('Sign In'),
-                      ),
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    // Admin Login Helper
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: AppColors.info.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: AppColors.info.withOpacity(0.3),
-                          width: 1,
-                        ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.info_outline,
-                                size: 16,
-                                color: AppColors.info,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                'Admin Login',
-                                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                                  color: AppColors.info,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Email: ${AppConstants.adminEmail}',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: AppColors.grey700,
-                            ),
-                          ),
-                          Text(
-                            'Password: ${AppConstants.adminPassword}',
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: AppColors.grey700,
-                            ),
-                          ),
-                        ],
                       ),
                     ),
                   ],
                 ),
-              ),
+                const SizedBox(height: AppConstants.paddingLarge),
 
-              const SizedBox(height: 32),
+                // Sign In Button
+                CustomButton(
+                  text: 'Sign In',
+                  width: double.infinity,
+                  onPressed: _signIn,
+                  isLoading: authState.maybeWhen(
+                    loading: () => true,
+                    orElse: () => false,
+                  ),
+                ),
+                const SizedBox(height: AppConstants.paddingLarge),
 
-              // Sign Up Link
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    "Don't have an account? ",
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: AppColors.grey600,
+                // Admin Login Helper
+                Container(
+                  padding: const EdgeInsets.all(AppConstants.paddingMedium),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(AppConstants.borderRadius),
+                    border: Border.all(
+                      color: theme.colorScheme.primary.withOpacity(0.3),
                     ),
                   ),
-                  TextButton(
-                    onPressed: _navigateToSignUp,
-                    child: const Text('Sign Up'),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.info_outline,
+                            size: 16,
+                            color: theme.colorScheme.primary,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Demo Admin Login',
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              color: theme.colorScheme.primary,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Email: ${AppConstants.adminEmail}',
+                        style: theme.textTheme.bodySmall,
+                      ),
+                      Text(
+                        'Password: ${AppConstants.adminPassword}',
+                        style: theme.textTheme.bodySmall,
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            ],
+                ),
+                const SizedBox(height: AppConstants.paddingLarge),
+
+                // Divider
+                Row(
+                  children: [
+                    Expanded(
+                      child: Divider(
+                        color: theme.colorScheme.outline.withOpacity(0.3),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: AppConstants.paddingMedium),
+                      child: Text(
+                        'or',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurface.withOpacity(0.6),
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Divider(
+                        color: theme.colorScheme.outline.withOpacity(0.3),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppConstants.paddingLarge),
+
+                // Sign Up Link
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      "Don't have an account? ",
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.colorScheme.onSurface.withOpacity(0.7),
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        context.pushReplacement(AppConstants.signUpRoute);
+                      },
+                      child: Text(
+                        'Sign Up',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.primary,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: AppConstants.paddingLarge),
+              ],
+            ),
           ),
         ),
       ),

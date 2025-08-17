@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1011736888409",
+    "project_id": "plantwise-9b5f1",
+    "storage_bucket": "plantwise-9b5f1.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1011736888409:android:53b91c237110db47971d48",
+        "android_client_info": {
+          "package_name": "com.example.plantwise"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD7l3wS8x1jZ3NWCY5WDfSVfBl1mvfHGP0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
