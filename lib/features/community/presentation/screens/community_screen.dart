@@ -5,9 +5,13 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../config/theme/app_theme.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../domain/models/community_post.dart';
+import '../../domain/models/group.dart';
 import '../providers/community_provider.dart';
+import '../providers/groups_provider.dart';
+import '../../../authentication/presentation/providers/auth_providers.dart' as auth;
 import 'comments_screen.dart';
 import 'create_post_screen.dart';
+import '../widgets/group_management_dialogs.dart';
 
 class CommunityScreen extends ConsumerStatefulWidget {
   const CommunityScreen({super.key});
@@ -24,12 +28,18 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _tabController.addListener(_onTabChanged);
   }
 
   @override
   void dispose() {
+    _tabController.removeListener(_onTabChanged);
     _tabController.dispose();
     super.dispose();
+  }
+  
+  void _onTabChanged() {
+    setState(() {}); // Trigger rebuild to update FAB
   }
 
   @override
@@ -68,12 +78,7 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen>
           _ExpertsTab(),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _createPost(context),
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-        child: const Icon(Icons.add),
-      ),
+      floatingActionButton: _buildFloatingActionButton(),
     );
   }
 
@@ -86,6 +91,37 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen>
   void _showNotifications(BuildContext context) {
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('Notifications coming soon!')),
+    );
+  }
+
+  Widget _buildFloatingActionButton() {
+    // Show different FAB based on current tab
+    switch (_tabController.index) {
+      case 1: // Groups tab
+        return FloatingActionButton(
+          onPressed: () => _showGroupOptions(context),
+          backgroundColor: AppColors.secondary,
+          foregroundColor: Colors.white,
+          child: const Icon(Icons.group_add),
+        );
+      case 0: // Feed tab
+      case 2: // Experts tab
+      default:
+        return FloatingActionButton(
+          onPressed: () => _createPost(context),
+          backgroundColor: AppColors.primary,
+          foregroundColor: Colors.white,
+          child: const Icon(Icons.add),
+        );
+    }
+  }
+  
+  void _showGroupOptions(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => const GroupManagementDialog(),
     );
   }
 
@@ -104,109 +140,245 @@ class _FeedTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final posts = ref.watch(communityPostsProvider);
+    final postsAsync = ref.watch(communityPostsStreamProvider);
     
-    if (posts.isEmpty) {
-      return const Center(
+    return postsAsync.when(
+      data: (posts) {
+        if (posts.isEmpty) {
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.all(AppConstants.paddingLarge),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.people_outline,
+                    size: 64,
+                    color: AppColors.grey400,
+                  ),
+                  SizedBox(height: 16),
+                  Text(
+                    'No posts yet!',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.grey700,
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    'Be the first to share something with the community.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: AppColors.grey600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        return RefreshIndicator(
+          onRefresh: () async {
+            // Refresh will happen automatically with real-time stream
+            await Future.delayed(const Duration(milliseconds: 500));
+          },
+          child: ListView.builder(
+            padding: const EdgeInsets.all(AppConstants.paddingMedium),
+            itemCount: posts.length,
+            itemBuilder: (context, index) => _PostCard(post: posts[index]),
+          ),
+        );
+      },
+      loading: () => const Center(
         child: Padding(
           padding: EdgeInsets.all(AppConstants.paddingLarge),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                Icons.people_outline,
-                size: 64,
-                color: AppColors.grey400,
-              ),
+              CircularProgressIndicator(),
               SizedBox(height: 16),
               Text(
-                'No posts yet!',
+                'Loading posts...',
                 style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.grey700,
-                ),
-              ),
-              SizedBox(height: 8),
-              Text(
-                'Be the first to share something with the community.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
+                  fontSize: 16,
                   color: AppColors.grey600,
                 ),
               ),
             ],
           ),
         ),
-      );
-    }
-
-    return RefreshIndicator(
-      onRefresh: () async {
-        // In a real app, this would fetch new posts from the server
-        await Future.delayed(const Duration(seconds: 1));
-      },
-      child: ListView.builder(
-        padding: const EdgeInsets.all(AppConstants.paddingMedium),
-        itemCount: posts.length,
-        itemBuilder: (context, index) => _PostCard(post: posts[index]),
+      ),
+      error: (error, stack) => Center(
+        child: Padding(
+          padding: const EdgeInsets.all(AppConstants.paddingLarge),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.error_outline,
+                size: 64,
+                color: AppColors.error,
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Failed to load posts',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.grey700,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Error: $error',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: AppColors.grey600,
+                ),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () {
+                  // Trigger a rebuild of the provider
+                  ref.invalidate(communityPostsStreamProvider);
+                },
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
 }
 
-class _GroupsTab extends StatelessWidget {
+class _GroupsTab extends ConsumerWidget {
   const _GroupsTab();
 
   @override
-  Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(AppConstants.paddingMedium),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Recommended Groups
-          Text(
-            'Recommended Groups',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 16),
-          SizedBox(
-            height: 200,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: _sampleGroups.length,
-              itemBuilder: (context, index) =>
-                  _GroupCard(group: _sampleGroups[index]),
-            ),
-          ),
-          const SizedBox(height: 32),
-          // My Groups
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'My Groups',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+  Widget build(BuildContext context, WidgetRef ref) {
+    final userGroupsAsync = ref.watch(userGroupsProvider);
+    
+    return userGroupsAsync.when(
+      data: (groups) {
+        if (groups.isEmpty) {
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.all(AppConstants.paddingLarge),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.group_outlined,
+                    size: 80,
+                    color: AppColors.grey400,
+                  ),
+                  SizedBox(height: 24),
+                  Text(
+                    'No Groups Yet',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.grey700,
+                    ),
+                  ),
+                  SizedBox(height: 12),
+                  Text(
+                    'Join plant communities to improve your plant care knowledge!',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: AppColors.grey600,
+                      height: 1.4,
+                    ),
+                  ),
+                  SizedBox(height: 32),
+                  Text(
+                    '🌱 Connect with fellow plant enthusiasts\n🌿 Share your plant journey\n🌸 Get expert advice and tips',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: AppColors.grey600,
+                      height: 1.6,
+                    ),
+                  ),
+                ],
               ),
-              TextButton(
-                onPressed: () {},
-                child: const Text('View All'),
+            ),
+          );
+        }
+        
+        return RefreshIndicator(
+          onRefresh: () async {
+            ref.invalidate(userGroupsProvider);
+            await Future.delayed(const Duration(milliseconds: 500));
+          },
+          child: ListView.builder(
+            padding: const EdgeInsets.all(AppConstants.paddingMedium),
+            itemCount: groups.length,
+            itemBuilder: (context, index) => _RealGroupCard(group: groups[index]),
+          ),
+        );
+      },
+      loading: () => const Center(
+        child: Padding(
+          padding: EdgeInsets.all(AppConstants.paddingLarge),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 16),
+              Text(
+                'Loading your groups...',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: AppColors.grey600,
+                ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          Column(
-            children: _sampleGroups
-                .take(3)
-                .map((group) => _GroupListTile(group: group))
-                .toList(),
+        ),
+      ),
+      error: (error, stack) => Center(
+        child: Padding(
+          padding: const EdgeInsets.all(AppConstants.paddingLarge),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.error_outline,
+                size: 64,
+                color: AppColors.error,
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Failed to load groups',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.grey700,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Error: $error',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: AppColors.grey600,
+                ),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () {
+                  ref.invalidate(userGroupsProvider);
+                },
+                child: const Text('Retry'),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }
@@ -225,25 +397,135 @@ class _ExpertsTab extends StatelessWidget {
   }
 }
 
-class _PostCard extends ConsumerWidget {
+class _PostCard extends ConsumerStatefulWidget {
   final CommunityPost post;
 
   const _PostCard({required this.post});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final currentUser = ref.watch(currentUserProvider);
+  ConsumerState<_PostCard> createState() => _PostCardState();
+}
+
+class _PostCardState extends ConsumerState<_PostCard>
+    with TickerProviderStateMixin {
+  late AnimationController _likeAnimationController;
+  late AnimationController _hoverAnimationController;
+  late Animation<double> _likeAnimation;
+  late Animation<double> _scaleAnimation;
+  bool _isHovered = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _likeAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 200),
+      vsync: this,
+    );
+    _hoverAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 150),
+      vsync: this,
+    );
+    _likeAnimation = Tween<double>(begin: 1.0, end: 1.2).animate(
+      CurvedAnimation(
+        parent: _likeAnimationController,
+        curve: Curves.elasticOut,
+      ),
+    );
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 1.02).animate(
+      CurvedAnimation(
+        parent: _hoverAnimationController,
+        curve: Curves.easeInOut,
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _likeAnimationController.dispose();
+    _hoverAnimationController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final currentUserAsync = ref.watch(auth.currentUserProvider);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     
+    return currentUserAsync.when(
+      data: (currentUser) => _buildPostCard(context, currentUser, isDark),
+      loading: () => _buildLoadingCard(isDark),
+      error: (_, __) => _buildErrorCard(),
+    );
+  }
+
+  Widget _buildLoadingCard(bool isDark) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 20),
+      height: 200,
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E1E1E) : AppColors.surface,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isDark ? AppColors.grey800 : AppColors.grey200,
+          width: 1,
+        ),
+      ),
+      child: const Center(
+        child: CircularProgressIndicator(
+          color: AppColors.primary,
+          strokeWidth: 2,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorCard() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 20),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: AppColors.error.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: AppColors.error.withOpacity(0.2),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.error_outline,
+            color: AppColors.error,
+            size: 24,
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Text(
+              'Unable to load user data',
+              style: TextStyle(
+                color: AppColors.error,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPostCard(BuildContext context, dynamic currentUser, bool isDark) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        color: isDark ? const Color(0xFF1E1E1E) : AppColors.surface,
+        borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
-            blurRadius: 8,
-            spreadRadius: 0,
+            color: isDark 
+                ? Colors.black.withOpacity(0.2)
+                : AppColors.grey300.withOpacity(0.3),
+            blurRadius: 6,
             offset: const Offset(0, 2),
           ),
         ],
@@ -251,7 +533,7 @@ class _PostCard extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header with user info
+          // Simple header
           Padding(
             padding: const EdgeInsets.all(16),
             child: Row(
@@ -259,11 +541,15 @@ class _PostCard extends ConsumerWidget {
                 CircleAvatar(
                   radius: 20,
                   backgroundColor: AppColors.primary.withOpacity(0.1),
-                  backgroundImage: post.userAvatar != null
-                      ? NetworkImage(post.userAvatar!)
+                  backgroundImage: widget.post.userAvatar != null
+                      ? NetworkImage(widget.post.userAvatar!)
                       : null,
-                  child: post.userAvatar == null
-                      ? const Icon(Icons.person, color: AppColors.primary, size: 20)
+                  child: widget.post.userAvatar == null
+                      ? Icon(
+                          Icons.person,
+                          color: AppColors.primary,
+                          size: 20,
+                        )
                       : null,
                 ),
                 const SizedBox(width: 12),
@@ -274,112 +560,72 @@ class _PostCard extends ConsumerWidget {
                       Row(
                         children: [
                           Text(
-                            post.userName,
+                            widget.post.userName,
                             style: Theme.of(context).textTheme.titleSmall?.copyWith(
                               fontWeight: FontWeight.w600,
-                              color: AppColors.grey800,
                             ),
                           ),
-                          if (post.postType != null) ...[
+                          if (widget.post.postType != null) ...[
                             const SizedBox(width: 8),
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
+                                horizontal: 6,
                                 vertical: 2,
                               ),
                               decoration: BoxDecoration(
-                                color: post.postType!.color.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(
-                                  color: post.postType!.color.withOpacity(0.3),
-                                ),
+                                color: widget.post.postType!.color.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(8),
                               ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    post.postType!.icon,
-                                    size: 10,
-                                    color: post.postType!.color,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    post.postType!.displayName,
-                                    style: TextStyle(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.w600,
-                                      color: post.postType!.color,
-                                    ),
-                                  ),
-                                ],
+                              child: Text(
+                                widget.post.postType!.displayName,
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w500,
+                                  color: widget.post.postType!.color,
+                                ),
                               ),
                             ),
                           ],
                         ],
                       ),
                       const SizedBox(height: 2),
-                      Row(
-                        children: [
-                          Text(
-                            post.timeAgo,
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: AppColors.grey500,
-                              fontWeight: FontWeight.w400,
-                            ),
-                          ),
-                          if (post.location != null) ...[
-                            const SizedBox(width: 4),
-                            Text('•', style: TextStyle(color: AppColors.grey400)),
-                            const SizedBox(width: 4),
-                            Icon(
-                              Icons.location_on,
-                              size: 12,
-                              color: AppColors.grey400,
-                            ),
-                            const SizedBox(width: 2),
-                            Text(
-                              post.location!,
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: AppColors.grey500,
-                                fontWeight: FontWeight.w400,
-                              ),
-                            ),
-                          ],
-                        ],
+                      Text(
+                        widget.post.timeAgo,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppColors.grey500,
+                        ),
                       ),
                     ],
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.more_vert, size: 18),
+                  icon: const Icon(Icons.more_vert),
+                  iconSize: 18,
                   color: AppColors.grey500,
-                  onPressed: () => _showPostOptions(context, post, ref),
+                  onPressed: () => _showPostOptions(context, widget.post, ref),
                 ),
               ],
             ),
           ),
-          
           // Content
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Text(
-              post.content,
+              widget.post.content,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 height: 1.4,
-                color: AppColors.grey800,
               ),
             ),
           ),
-          
           // Tags
-          if (post.tags != null && post.tags!.isNotEmpty) ...[
+          if (widget.post.tags != null && widget.post.tags!.isNotEmpty) ...[
             const SizedBox(height: 12),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Wrap(
                 spacing: 6,
                 runSpacing: 4,
-                children: post.tags!.take(3).map((tag) {
+                children: widget.post.tags!.take(3).map((tag) {
                   return Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 8,
@@ -402,11 +648,10 @@ class _PostCard extends ConsumerWidget {
               ),
             ),
           ],
-          
           // Image
-          if (post.imageUrl != null) ...[
+          if (widget.post.imageUrl != null) ...[
             const SizedBox(height: 12),
-            _buildPostImage(post.imageUrl!),
+            _buildPostImage(widget.post.imageUrl!),
           ],
           
           const SizedBox(height: 12),
@@ -416,58 +661,61 @@ class _PostCard extends ConsumerWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
               children: [
-                _ModernActionButton(
-                  icon: post.isLikedBy(currentUser.id) 
+                _ActionButton(
+                  icon: currentUser != null && widget.post.isLikedBy(currentUser.id) 
                       ? Icons.favorite 
                       : Icons.favorite_border,
-                  label: post.likesCount.toString(),
-                  color: post.isLikedBy(currentUser.id) 
+                  label: widget.post.likesCount.toString(),
+                  color: currentUser != null && widget.post.isLikedBy(currentUser.id) 
                       ? Colors.red 
                       : AppColors.grey600,
-                  isActive: post.isLikedBy(currentUser.id),
-                  onPressed: () => _toggleLike(post, currentUser.id, ref),
+                  onPressed: currentUser != null 
+                      ? () => _toggleLike(widget.post, currentUser.id, ref)
+                      : () {},
                 ),
                 const SizedBox(width: 20),
-                _ModernActionButton(
+                _ActionButton(
                   icon: Icons.chat_bubble_outline,
-                  label: post.commentsCount.toString(),
+                  label: widget.post.commentsCount.toString(),
                   color: AppColors.grey600,
-                  onPressed: () => _showComments(context, post, ref),
+                  onPressed: () => _showComments(context, widget.post, ref),
                 ),
                 const SizedBox(width: 20),
-                _ModernActionButton(
+                _ActionButton(
                   icon: Icons.share_outlined,
-                  label: 'Share',
+                  label: widget.post.sharesCount > 0 ? widget.post.sharesCount.toString() : 'Share',
                   color: AppColors.grey600,
-                  onPressed: () => _sharePost(context, post, ref),
+                  onPressed: () => _sharePost(context, widget.post, ref),
                 ),
               ],
             ),
           ),
           
           // Comments preview
-          if (post.comments.isNotEmpty) ...[
+          if (widget.post.comments.isNotEmpty) ...[
             const SizedBox(height: 12),
             Container(
               width: double.infinity,
-              color: AppColors.grey50,
+              color: isDark 
+                  ? const Color(0xFF2D2D2D)
+                  : AppColors.grey50,
               padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (post.comments.length > 1)
+                  if (widget.post.comments.length > 1)
                     GestureDetector(
-                      onTap: () => _showComments(context, post, ref),
+                      onTap: () => _showComments(context, widget.post, ref),
                       child: Text(
-                        'View all ${post.commentsCount} comments',
+                        'View all ${widget.post.commentsCount} comments',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: AppColors.primary,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
                     ),
-                  if (post.comments.length > 1) const SizedBox(height: 8),
-                  _buildCommentPreview(post.comments.last),
+                  if (widget.post.comments.length > 1) const SizedBox(height: 8),
+                  _buildCommentPreview(context, widget.post.comments.last),
                 ],
               ),
             ),
@@ -533,7 +781,7 @@ class _PostCard extends ConsumerWidget {
     );
   }
 
-  Widget _buildCommentPreview(CommunityComment comment) {
+  Widget _buildCommentPreview(BuildContext context, CommunityComment comment) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -556,16 +804,20 @@ class _PostCard extends ConsumerWidget {
                   children: [
                     TextSpan(
                       text: comment.userName,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.w600,
-                        color: AppColors.grey800,
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Theme.of(context).colorScheme.onSurface
+                            : AppColors.grey800,
                         fontSize: 13,
                       ),
                     ),
                     TextSpan(
                       text: ' ${comment.content}',
-                      style: const TextStyle(
-                        color: AppColors.grey700,
+                      style: TextStyle(
+                        color: Theme.of(context).brightness == Brightness.dark
+                            ? Theme.of(context).colorScheme.onSurface.withOpacity(0.7)
+                            : AppColors.grey700,
                         fontSize: 13,
                       ),
                     ),
@@ -771,6 +1023,252 @@ class _GroupListTile extends StatelessWidget {
         subtitle: Text('${group.members} members'),
         trailing: const Icon(Icons.chevron_right),
         onTap: () {},
+      ),
+    );
+  }
+}
+
+// Real group card for actual Group model
+class _RealGroupCard extends ConsumerWidget {
+  final Group group;
+
+  const _RealGroupCard({required this.group});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final currentUserAsync = ref.watch(auth.currentUserProvider);
+    
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: isDark ? const Color(0xFF1E1E1E) : AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: isDark 
+                ? Colors.black.withOpacity(0.2)
+                : AppColors.grey300.withOpacity(0.3),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 50,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    color: group.category.icon == Icons.local_florist 
+                        ? Colors.pink.withOpacity(0.15)
+                        : AppColors.primary.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    group.category.icon,
+                    color: group.category.icon == Icons.local_florist 
+                        ? Colors.pink
+                        : AppColors.primary,
+                    size: 26,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        group.name,
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              color: group.category.icon == Icons.local_florist 
+                                  ? Colors.pink.withOpacity(0.1)
+                                  : AppColors.primary.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              group.category.displayName,
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w500,
+                                color: group.category.icon == Icons.local_florist 
+                                    ? Colors.pink
+                                    : AppColors.primary,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            '${group.memberCount} ${group.memberCount == 1 ? 'member' : 'members'}',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              color: AppColors.grey600,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            Text(
+              group.description,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: isDark ? AppColors.grey300 : AppColors.grey700,
+                height: 1.4,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            if (group.tags.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              Wrap(
+                spacing: 6,
+                runSpacing: 4,
+                children: group.tags.take(3).map((tag) {
+                  return Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.secondary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      '#$tag',
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w500,
+                        color: AppColors.secondary,
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ],
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Icon(
+                  Icons.access_time,
+                  size: 14,
+                  color: AppColors.grey500,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  'Created ${group.timeAgo}',
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: AppColors.grey500,
+                  ),
+                ),
+                const Spacer(),
+                currentUserAsync.when(
+                  data: (currentUser) {
+                    if (currentUser == null) {
+                      return const SizedBox.shrink();
+                    }
+                    
+                    final isAdmin = group.isAdmin(currentUser.id);
+                    
+                    if (isAdmin) {
+                      return Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.success.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: AppColors.success.withOpacity(0.3),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.admin_panel_settings,
+                              size: 14,
+                              color: AppColors.success,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              'Admin',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.success,
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    } else {
+                      return OutlinedButton(
+                        onPressed: () {
+                          // Handle group tap - could navigate to group details
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Opening ${group.name}...'),
+                              duration: const Duration(seconds: 1),
+                            ),
+                          );
+                        },
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 6,
+                          ),
+                          side: BorderSide(
+                            color: AppColors.primary.withOpacity(0.5),
+                          ),
+                        ),
+                        child: Text(
+                          'View',
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      );
+                    }
+                  },
+                  loading: () => const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                  error: (_, __) => const SizedBox.shrink(),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

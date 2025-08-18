@@ -13,10 +13,40 @@ import '../../features/admin/presentation/screens/admin_screen.dart';
 import '../../features/profile/presentation/screens/edit_profile_screen.dart';
 import '../../features/profile/presentation/screens/change_password_screen.dart';
 import '../../core/constants/app_constants.dart';
+import '../../features/authentication/data/services/auth_storage_service.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: AppConstants.splashRoute,
+    redirect: (context, state) async {
+      // Allow splash screen to handle its own logic
+      if (state.matchedLocation == AppConstants.splashRoute) {
+        return null;
+      }
+      
+      // Allow onboarding and auth routes to be accessed without login
+      final allowedWithoutLogin = [
+        AppConstants.onboardingRoute,
+        AppConstants.signInRoute,
+        AppConstants.signUpRoute,
+        AppConstants.forgotPasswordRoute,
+      ];
+      
+      if (allowedWithoutLogin.contains(state.matchedLocation)) {
+        return null;
+      }
+      
+      // For protected routes, check if user is logged in
+      final isLoggedIn = await AuthStorageService.instance.isLoggedIn();
+      if (!isLoggedIn) {
+        // If not logged in, check if they've seen onboarding
+        final isFirstLaunch = await AuthStorageService.instance.isFirstLaunch();
+        return isFirstLaunch ? AppConstants.onboardingRoute : AppConstants.signInRoute;
+      }
+      
+      // Allow access to protected routes if logged in
+      return null;
+    },
     routes: [
       // Splash Screen
       GoRoute(

@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/datasources/firebase_auth_datasource.dart';
 import '../../data/repositories/auth_repository_impl.dart';
+import '../../data/services/auth_storage_service.dart';
 import '../../domain/repositories/auth_repository.dart';
 import '../../domain/entities/user.dart' as domain;
 import 'auth_state.dart';
@@ -61,11 +62,20 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   void _init() {
     _authRepository.authStateChanges.listen(
-      (user) {
+      (user) async {
         print('Auth state changed: ${user?.email ?? 'null'}');
         if (user != null) {
+          // Sync with AuthStorageService when user is authenticated
+          await AuthStorageService.instance.saveLoginState(
+            isLoggedIn: true,
+            userId: user.id,
+            email: user.email,
+            name: user.name,
+          );
           state = AuthState.authenticated(user);
         } else {
+          // Clear AuthStorageService when user is unauthenticated
+          await AuthStorageService.instance.clearLoginState();
           state = const AuthState.unauthenticated();
         }
       },
@@ -114,6 +124,8 @@ class AuthNotifier extends StateNotifier<AuthState> {
     state = const AuthState.loading();
     try {
       await _authRepository.signOut();
+      // Clear storage service (this will also be done by the stream listener, but ensures cleanup)
+      await AuthStorageService.instance.clearLoginState();
       state = const AuthState.unauthenticated();
     } catch (e) {
       state = AuthState.error(e.toString());

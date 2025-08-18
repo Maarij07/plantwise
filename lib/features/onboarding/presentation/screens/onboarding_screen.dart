@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../config/theme/app_theme.dart';
 import '../../../../core/constants/app_constants.dart';
+import '../../../authentication/data/services/auth_storage_service.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -41,8 +42,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     _navigateToSignIn();
   }
 
-  void _navigateToSignIn() {
-    context.go(AppConstants.signInRoute);
+  void _navigateToSignIn() async {
+    // Mark that user has completed onboarding
+    await AuthStorageService.instance.setFirstLaunchComplete();
+    if (mounted) {
+      context.go(AppConstants.signInRoute);
+    }
   }
 
   @override

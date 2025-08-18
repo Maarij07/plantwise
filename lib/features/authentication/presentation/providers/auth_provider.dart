@@ -1,8 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/repositories/firebase_auth_repository.dart';
-import '../../domain/models/auth_result.dart';
-import '../../domain/models/user_model.dart';
+import '../../data/services/auth_storage_service.dart';
+import '../../domain/entities/user.dart';
 import '../../domain/repositories/auth_repository.dart';
+import 'auth_state.dart';
 
 // Repository Provider
 final authRepositoryProvider = Provider<AuthRepository>((ref) {
@@ -10,15 +11,15 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
 });
 
 // Auth State Stream Provider
-final authStateProvider = StreamProvider<UserModel?>((ref) {
+final authStateProvider = StreamProvider<User?>((ref) {
   final repository = ref.watch(authRepositoryProvider);
   return repository.authStateChanges;
 });
 
 // Current User Provider
-final currentUserProvider = Provider<UserModel?>((ref) {
+final currentUserProvider = FutureProvider<User?>((ref) {
   final repository = ref.watch(authRepositoryProvider);
-  return repository.currentUser;
+  return repository.getCurrentUser();
 });
 
 // Auth Controller
@@ -33,63 +34,85 @@ class AuthController extends StateNotifier<AuthState> {
   }) async {
     state = const AuthState.loading();
     
-    final result = await _repository.signInWithEmailAndPassword(
-      email: email,
-      password: password,
-    );
-    
-    result.when(
-      success: (user) => state = AuthState.authenticated(user),
-      failure: (message) => state = AuthState.error(message),
-    );
+    try {
+      final user = await _repository.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      
+      if (user != null) {
+        // Save login state to persistent storage
+        await AuthStorageService.instance.saveLoginState(
+          isLoggedIn: true,
+          userId: user.id,
+          email: user.email,
+          name: user.name,
+        );
+        state = AuthState.authenticated(user);
+      } else {
+        state = const AuthState.error('Sign in failed');
+      }
+    } catch (e) {
+      state = AuthState.error(e.toString());
+    }
   }
 
   Future<void> signUpWithEmailAndPassword({
     required String email,
     required String password,
-    String? displayName,
+    required String name,
   }) async {
     state = const AuthState.loading();
     
-    final result = await _repository.signUpWithEmailAndPassword(
-      email: email,
-      password: password,
-      displayName: displayName,
-    );
-    
-    result.when(
-      success: (user) => state = AuthState.authenticated(user),
-      failure: (message) => state = AuthState.error(message),
-    );
+    try {
+      final user = await _repository.signUpWithEmailAndPassword(
+        email: email,
+        password: password,
+        name: name,
+      );
+      
+      // Save login state to persistent storage
+      await AuthStorageService.instance.saveLoginState(
+        isLoggedIn: true,
+        userId: user.id,
+        email: user.email,
+        name: user.name,
+      );
+      
+      state = AuthState.authenticated(user);
+    } catch (e) {
+      state = AuthState.error(e.toString());
+    }
   }
 
   Future<void> signOut() async {
+    // Clear login state from persistent storage
+    await AuthStorageService.instance.clearLoginState();
     await _repository.signOut();
     state = const AuthState.unauthenticated();
   }
 
-  Future<AuthResult> sendPasswordResetEmail(String email) async {
-    return await _repository.sendPasswordResetEmail(email);
+  Future<void> sendPasswordResetEmail(String email) async {
+    try {
+      await _repository.sendPasswordResetEmail(email: email);
+      // Could add a success state if needed
+    } catch (e) {
+      state = AuthState.error(e.toString());
+      rethrow;
+    }
   }
 
-  Future<void> updateProfile({
-    String? displayName,
-    String? photoUrl,
-  }) async {
-    final result = await _repository.updateProfile(
-      displayName: displayName,
-      photoUrl: photoUrl,
-    );
-    
-    result.when(
-      success: (user) => state = AuthState.authenticated(user),
-      failure: (message) => state = AuthState.error(message),
-    );
-  }
+  // Profile update functionality would need to be implemented in repository if needed
+  // Future<void> updateProfile({
+  //   String? displayName,
+  //   String? photoUrl,
+  // }) async {
+  //   // Implementation would go here
+  // }
 
-  void clearError() {
-    if (state is AuthError) {
-      final currentUser = _repository.currentUser;
+  Future<void> clearError() async {
+    if (state is AuthStateError) {
+      final currentUser = await _repository.getCurrentUser();
       if (currentUser != null) {
         state = AuthState.authenticated(currentUser);
       } else {
@@ -116,5 +139,5 @@ final isAuthenticatedProvider = Provider<bool>((ref) {
 
 final isLoadingProvider = Provider<bool>((ref) {
   final authState = ref.watch(authControllerProvider);
-  return authState is AuthLoading;
+  return authState is AuthStateLoading;
 });

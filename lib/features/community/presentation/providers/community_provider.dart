@@ -1,169 +1,195 @@
-import 'dart:convert';
 import 'dart:io';
-import 'dart:math';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../domain/models/community_post.dart';
+import '../../data/services/community_firebase_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
-// Current user provider (simple implementation - in real app would come from auth)
-final currentUserProvider = Provider<CommunityUser>((ref) {
-  return const CommunityUser(
-    id: 'current_user',
-    name: 'You',
-    avatar: null,
-  );
+// Firebase service provider
+final communityFirebaseServiceProvider = Provider<CommunityFirebaseService>((ref) {
+  return CommunityFirebaseService();
 });
 
-// Community posts provider
-final communityPostsProvider = StateNotifierProvider<CommunityPostsNotifier, List<CommunityPost>>((ref) {
-  return CommunityPostsNotifier();
-});
-
-class CommunityPostsNotifier extends StateNotifier<List<CommunityPost>> {
-  CommunityPostsNotifier() : super([]) {
-    _loadPosts();
+// Current user provider - integrates with Firebase Auth
+final currentUserProvider = Provider<CommunityUser?>((ref) {
+  final user = FirebaseAuth.instance.currentUser;
+  if (user != null) {
+    return CommunityUser(
+      id: user.uid,
+      name: user.displayName ?? 'User',
+      avatar: user.photoURL,
+    );
   }
+  return null;
+});
 
-  static const String _postsKey = 'community_posts';
+// Community posts stream provider - real-time Firebase data
+final communityPostsStreamProvider = StreamProvider<List<CommunityPost>>((ref) {
+  final service = ref.watch(communityFirebaseServiceProvider);
+  return service.getPostsStream();
+});
+
+// Community posts provider for backward compatibility and actions
+final communityPostsProvider = StateNotifierProvider<CommunityPostsNotifier, AsyncValue<List<CommunityPost>>>((ref) {
+  return CommunityPostsNotifier(ref);
+});
+
+class CommunityPostsNotifier extends StateNotifier<AsyncValue<List<CommunityPost>>> {
+  final Ref _ref;
+  late final CommunityFirebaseService _service;
   final ImagePicker _imagePicker = ImagePicker();
 
-  Future<void> _loadPosts() async {
-    final prefs = await SharedPreferences.getInstance();
-    final postsJson = prefs.getStringList(_postsKey);
-    
-    if (postsJson != null && postsJson.isNotEmpty) {
-      try {
-        state = postsJson
-            .map((json) => CommunityPost.fromJson(jsonDecode(json)))
-            .toList();
-      } catch (e) {
-        // If there's an error parsing, initialize with sample data
-        state = _getSamplePosts();
-        await _savePosts();
-      }
-    } else {
-      // Initialize with sample data
-      state = _getSamplePosts();
-      await _savePosts();
-    }
+  CommunityPostsNotifier(this._ref) : super(const AsyncValue.loading()) {
+    _service = _ref.read(communityFirebaseServiceProvider);
+    _watchPosts();
   }
 
-  Future<void> _savePosts() async {
-    final prefs = await SharedPreferences.getInstance();
-    final postsJson = state
-        .map((post) => jsonEncode(post.toJson()))
-        .toList();
-    await prefs.setStringList(_postsKey, postsJson);
+  void _watchPosts() {
+    _ref.listen<AsyncValue<List<CommunityPost>>>(communityPostsStreamProvider, (previous, next) {
+      state = next;
+    });
   }
+
 
   // Create a new post
-  Future<void> createPost({
+  Future<String> createPost({
     required String content,
     File? image,
     String? location,
     PostType? postType,
     List<String>? tags,
   }) async {
-    final newPost = CommunityPost(
-      id: _generateId(),
-      userId: 'current_user',
-      userName: 'You',
-      userAvatar: null,
-      content: content,
-      imageUrl: image?.path, // In real app, would upload to cloud storage
-      createdAt: DateTime.now(),
-      likedBy: [],
-      comments: [],
-      location: location,
-      postType: postType ?? PostType.general,
-      tags: tags,
-    );
+    try {
+      final user = _ref.read(currentUserProvider);
+      if (user == null) {
+        throw Exception('User not authenticated');
+      }
 
-    state = [newPost, ...state];
-    await _savePosts();
+      final postId = await _service.createPost(
+        userId: user.id,
+        userName: user.name,
+        userAvatar: user.avatar,
+        content: content,
+        imageFile: image,
+        location: location,
+        postType: postType,
+        tags: tags,
+      );
+
+      return postId;
+    } catch (e) {
+      print('Error creating post: $e');
+      rethrow;
+    }
   }
 
   // Toggle like on a post
   Future<void> toggleLike(String postId, String userId) async {
-    state = state.map((post) {
-      if (post.id == postId) {
-        final likedBy = List<String>.from(post.likedBy);
-        if (likedBy.contains(userId)) {
-          likedBy.remove(userId);
-        } else {
-          likedBy.add(userId);
-        }
-        return post.copyWith(likedBy: likedBy);
-      }
-      return post;
-    }).toList();
-    await _savePosts();
+    try {
+      await _service.toggleLike(postId, userId);
+    } catch (e) {
+      print('Error toggling like: $e');
+      rethrow;
+    }
   }
 
   // Add a comment to a post
-  Future<void> addComment(String postId, String content, String userId, String userName) async {
-    final comment = CommunityComment(
-      id: _generateId(),
-      userId: userId,
-      userName: userName,
-      userAvatar: null,
-      content: content,
-      createdAt: DateTime.now(),
-      likedBy: [],
-    );
-
-    state = state.map((post) {
-      if (post.id == postId) {
-        final comments = List<CommunityComment>.from(post.comments);
-        comments.add(comment);
-        return post.copyWith(comments: comments);
+  Future<void> addComment(String postId, String content) async {
+    try {
+      final user = _ref.read(currentUserProvider);
+      if (user == null) {
+        throw Exception('User not authenticated');
       }
-      return post;
-    }).toList();
-    await _savePosts();
+
+      await _service.addComment(
+        postId: postId,
+        userId: user.id,
+        userName: user.name,
+        userAvatar: user.avatar,
+        content: content,
+      );
+    } catch (e) {
+      print('Error adding comment: $e');
+      rethrow;
+    }
   }
 
   // Toggle like on a comment
   Future<void> toggleCommentLike(String postId, String commentId, String userId) async {
-    state = state.map((post) {
-      if (post.id == postId) {
-        final comments = post.comments.map((comment) {
-          if (comment.id == commentId) {
-            final likedBy = List<String>.from(comment.likedBy);
-            if (likedBy.contains(userId)) {
-              likedBy.remove(userId);
-            } else {
-              likedBy.add(userId);
-            }
-            return comment.copyWith(likedBy: likedBy);
-          }
-          return comment;
-        }).toList();
-        return post.copyWith(comments: comments);
-      }
-      return post;
-    }).toList();
-    await _savePosts();
+    try {
+      await _service.toggleCommentLike(
+        postId: postId,
+        commentId: commentId,
+        userId: userId,
+      );
+    } catch (e) {
+      print('Error toggling comment like: $e');
+      rethrow;
+    }
   }
 
-  // Share a post
+  // Share a post (external sharing and track it)
   Future<void> sharePost(CommunityPost post) async {
     final text = '${post.userName} shared: "${post.content}"\n\nShared via PlantWise';
     try {
-      if (post.imageUrl != null && File(post.imageUrl!).existsSync()) {
-        await Share.shareXFiles(
-          [XFile(post.imageUrl!)],
-          text: text,
-        );
-      } else {
-        await Share.share(text);
+      final user = _ref.read(currentUserProvider);
+      if (user == null) {
+        throw Exception('User not authenticated');
       }
+
+      // Track the share in Firebase
+      await _service.toggleShare(post.id, user.id);
+      
+      // Share externally
+      await Share.share(text);
     } catch (e) {
-      // Fallback to copying to clipboard
-      await Clipboard.setData(ClipboardData(text: text));
+      print('Error sharing post: $e');
+      rethrow;
+    }
+  }
+
+  // Toggle share tracking only (without external sharing)
+  Future<void> toggleShare(String postId, String userId) async {
+    try {
+      await _service.toggleShare(postId, userId);
+    } catch (e) {
+      print('Error toggling share: $e');
+      rethrow;
+    }
+  }
+
+  // Delete a post
+  Future<void> deletePost(String postId) async {
+    try {
+      final user = _ref.read(currentUserProvider);
+      if (user == null) {
+        throw Exception('User not authenticated');
+      }
+
+      await _service.deletePost(postId, user.id);
+    } catch (e) {
+      print('Error deleting post: $e');
+      rethrow;
+    }
+  }
+
+  // Report a post
+  Future<void> reportPost(String postId, String reason) async {
+    try {
+      final user = _ref.read(currentUserProvider);
+      if (user == null) {
+        throw Exception('User not authenticated');
+      }
+
+      await _service.reportPost(
+        postId: postId,
+        reporterId: user.id,
+        reason: reason,
+      );
+    } catch (e) {
+      print('Error reporting post: $e');
+      rethrow;
     }
   }
 
@@ -186,126 +212,7 @@ class CommunityPostsNotifier extends StateNotifier<List<CommunityPost>> {
     return null;
   }
 
-  String _generateId() {
-    return DateTime.now().millisecondsSinceEpoch.toString() + 
-           Random().nextInt(1000).toString();
-  }
 
-  List<CommunityPost> _getSamplePosts() {
-    final now = DateTime.now();
-    return [
-      CommunityPost(
-        id: '1',
-        userId: 'user1',
-        userName: 'Sarah Green',
-        userAvatar: null,
-        content: 'Just repotted my Monstera! The roots were completely root-bound. Any tips for helping it recover from transplant shock? I\'ve been keeping it in bright, indirect light and haven\'t watered yet.',
-        imageUrl: null,
-        createdAt: now.subtract(const Duration(hours: 2)),
-        likedBy: ['user2', 'user3'],
-        comments: [
-          CommunityComment(
-            id: 'c1',
-            userId: 'user2',
-            userName: 'Plant Dad Mike',
-            userAvatar: null,
-            content: 'Wait about a week before watering! The roots need time to heal.',
-            createdAt: now.subtract(const Duration(hours: 1)),
-            likedBy: ['user1'],
-          ),
-          CommunityComment(
-            id: 'c2',
-            userId: 'user3',
-            userName: 'Green Thumb Gary',
-            userAvatar: null,
-            content: 'Also, make sure not to fertilize for at least a month after repotting.',
-            createdAt: now.subtract(const Duration(minutes: 45)),
-            likedBy: [],
-          ),
-        ],
-        postType: PostType.question,
-        tags: ['monstera', 'repotting', 'help'],
-      ),
-      CommunityPost(
-        id: '2',
-        userId: 'user2',
-        userName: 'Plant Dad Mike',
-        userAvatar: null,
-        content: 'My fiddle leaf fig finally grew a new leaf! 🌱 Patience really pays off with these beauties. It took almost 3 months but it was worth the wait!',
-        imageUrl: null,
-        createdAt: now.subtract(const Duration(hours: 5)),
-        likedBy: ['user1', 'user3', 'user4', 'user5'],
-        comments: [
-          CommunityComment(
-            id: 'c3',
-            userId: 'user1',
-            userName: 'Sarah Green',
-            userAvatar: null,
-            content: 'Congratulations! That\'s so exciting 🎉',
-            createdAt: now.subtract(const Duration(hours: 4)),
-            likedBy: ['user2'],
-          ),
-        ],
-        postType: PostType.showcase,
-        tags: ['fiddle-leaf-fig', 'new-growth', 'patience'],
-      ),
-      CommunityPost(
-        id: '3',
-        userId: 'user3',
-        userName: 'Indoor Jungle',
-        userAvatar: null,
-        content: 'Sunday plant care routine complete! ✅ Watered all the thirsty ones, misted the humidity lovers, and did a thorough pest check. How does everyone else organize their plant care schedule?',
-        imageUrl: null,
-        createdAt: now.subtract(const Duration(days: 1)),
-        likedBy: ['user1', 'user2', 'user4'],
-        comments: [
-          CommunityComment(
-            id: 'c4',
-            userId: 'user4',
-            userName: 'Botanical Beth',
-            userAvatar: null,
-            content: 'I use a plant care app to track watering schedules!',
-            createdAt: now.subtract(const Duration(hours: 20)),
-            likedBy: ['user3'],
-          ),
-          CommunityComment(
-            id: 'c5',
-            userId: 'user1',
-            userName: 'Sarah Green',
-            userAvatar: null,
-            content: 'I have a weekly checklist that I print out and check off',
-            createdAt: now.subtract(const Duration(hours: 18)),
-            likedBy: ['user3', 'user4'],
-          ),
-        ],
-        postType: PostType.general,
-        tags: ['plant-care', 'routine', 'sunday'],
-      ),
-      CommunityPost(
-        id: '4',
-        userId: 'user4',
-        userName: 'Botanical Beth',
-        userAvatar: null,
-        content: '💡 Pro tip: If your plant leaves are turning yellow, don\'t panic! It could be natural aging, overwatering, or even underwatering. Check the soil moisture first and look at which leaves are affected.',
-        imageUrl: null,
-        createdAt: now.subtract(const Duration(days: 2)),
-        likedBy: ['user1', 'user2', 'user3', 'user5', 'user6'],
-        comments: [
-          CommunityComment(
-            id: 'c6',
-            userId: 'user5',
-            userName: 'Newbie Gardener',
-            userAvatar: null,
-            content: 'This is so helpful! I always panic when I see yellow leaves',
-            createdAt: now.subtract(const Duration(days: 1, hours: 20)),
-            likedBy: ['user4'],
-          ),
-        ],
-        postType: PostType.tip,
-        tags: ['yellow-leaves', 'plant-care', 'troubleshooting'],
-      ),
-    ];
-  }
 }
 
 // Helper class for user info
@@ -323,15 +230,23 @@ class CommunityUser {
 
 // Provider to get posts that need attention (for notifications)
 final postsNeedingAttentionProvider = Provider<List<CommunityPost>>((ref) {
-  final posts = ref.watch(communityPostsProvider);
+  final postsAsync = ref.watch(communityPostsStreamProvider);
   final currentUser = ref.watch(currentUserProvider);
   
-  return posts.where((post) {
-    // Posts where current user has been mentioned or replied to
-    final hasNewComments = post.comments.any((comment) => 
-        comment.createdAt.isAfter(DateTime.now().subtract(const Duration(hours: 24))) &&
-        comment.userId != currentUser.id);
-    
-    return hasNewComments && post.userId == currentUser.id;
-  }).toList();
+  return postsAsync.when(
+    data: (posts) {
+      if (currentUser == null) return [];
+      
+      return posts.where((post) {
+        // Posts where current user has been mentioned or replied to
+        final hasNewComments = post.comments.any((comment) => 
+            comment.createdAt.isAfter(DateTime.now().subtract(const Duration(hours: 24))) &&
+            comment.userId != currentUser.id);
+        
+        return hasNewComments && post.userId == currentUser.id;
+      }).toList();
+    },
+    loading: () => [],
+    error: (_, __) => [],
+  );
 });

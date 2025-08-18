@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/constants/app_constants.dart';
+import '../../../authentication/data/services/auth_storage_service.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -20,7 +21,7 @@ class _SplashScreenState extends State<SplashScreen>
   void initState() {
     super.initState();
     _initializeAnimations();
-    _navigateToOnboarding();
+    _checkLoginStateAndNavigate();
   }
 
   void _initializeAnimations() {
@@ -48,12 +49,40 @@ class _SplashScreenState extends State<SplashScreen>
     _animationController.forward();
   }
 
-  void _navigateToOnboarding() {
-    Future.delayed(AppConstants.splashDuration, () {
+  void _checkLoginStateAndNavigate() async {
+    // Wait for splash duration to show the beautiful splash screen
+    await Future.delayed(AppConstants.splashDuration);
+    
+    if (!mounted) return;
+    
+    try {
+      final authStorage = AuthStorageService.instance;
+      
+      // Check if user is logged in
+      final isLoggedIn = await authStorage.isLoggedIn();
+      
+      if (isLoggedIn) {
+        // User is logged in, navigate to home/dashboard
+        context.go(AppConstants.homeRoute);
+      } else {
+        // Check if it's first launch to show onboarding
+        final isFirstLaunch = await authStorage.isFirstLaunch();
+        
+        if (isFirstLaunch) {
+          // First time user, show onboarding
+          context.go(AppConstants.onboardingRoute);
+        } else {
+          // Returning user who isn't logged in, go to sign in
+          context.go(AppConstants.signInRoute);
+        }
+      }
+    } catch (e) {
+      // If there's any error, default to onboarding
+      debugPrint('Error checking login state: $e');
       if (mounted) {
         context.go(AppConstants.onboardingRoute);
       }
-    });
+    }
   }
 
   @override

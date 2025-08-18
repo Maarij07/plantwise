@@ -14,10 +14,6 @@ T _$identity<T>(T value) => value;
 final _privateConstructorUsedError = UnsupportedError(
     'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
-CommunityPost _$CommunityPostFromJson(Map<String, dynamic> json) {
-  return _CommunityPost.fromJson(json);
-}
-
 /// @nodoc
 mixin _$CommunityPost {
   String get id => throw _privateConstructorUsedError;
@@ -29,12 +25,10 @@ mixin _$CommunityPost {
   DateTime get createdAt => throw _privateConstructorUsedError;
   List<String> get likedBy => throw _privateConstructorUsedError;
   List<CommunityComment> get comments => throw _privateConstructorUsedError;
+  List<String> get sharedBy => throw _privateConstructorUsedError;
   List<String>? get tags => throw _privateConstructorUsedError;
   String? get location => throw _privateConstructorUsedError;
   PostType? get postType => throw _privateConstructorUsedError;
-
-  /// Serializes this CommunityPost to a JSON map.
-  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
 
   /// Create a copy of CommunityPost
   /// with the given fields replaced by the non-null parameter values.
@@ -59,6 +53,7 @@ abstract class $CommunityPostCopyWith<$Res> {
       DateTime createdAt,
       List<String> likedBy,
       List<CommunityComment> comments,
+      List<String> sharedBy,
       List<String>? tags,
       String? location,
       PostType? postType});
@@ -88,6 +83,7 @@ class _$CommunityPostCopyWithImpl<$Res, $Val extends CommunityPost>
     Object? createdAt = null,
     Object? likedBy = null,
     Object? comments = null,
+    Object? sharedBy = null,
     Object? tags = freezed,
     Object? location = freezed,
     Object? postType = freezed,
@@ -129,6 +125,10 @@ class _$CommunityPostCopyWithImpl<$Res, $Val extends CommunityPost>
           ? _value.comments
           : comments // ignore: cast_nullable_to_non_nullable
               as List<CommunityComment>,
+      sharedBy: null == sharedBy
+          ? _value.sharedBy
+          : sharedBy // ignore: cast_nullable_to_non_nullable
+              as List<String>,
       tags: freezed == tags
           ? _value.tags
           : tags // ignore: cast_nullable_to_non_nullable
@@ -163,6 +163,7 @@ abstract class _$$CommunityPostImplCopyWith<$Res>
       DateTime createdAt,
       List<String> likedBy,
       List<CommunityComment> comments,
+      List<String> sharedBy,
       List<String>? tags,
       String? location,
       PostType? postType});
@@ -190,6 +191,7 @@ class __$$CommunityPostImplCopyWithImpl<$Res>
     Object? createdAt = null,
     Object? likedBy = null,
     Object? comments = null,
+    Object? sharedBy = null,
     Object? tags = freezed,
     Object? location = freezed,
     Object? postType = freezed,
@@ -231,6 +233,10 @@ class __$$CommunityPostImplCopyWithImpl<$Res>
           ? _value._comments
           : comments // ignore: cast_nullable_to_non_nullable
               as List<CommunityComment>,
+      sharedBy: null == sharedBy
+          ? _value._sharedBy
+          : sharedBy // ignore: cast_nullable_to_non_nullable
+              as List<String>,
       tags: freezed == tags
           ? _value._tags
           : tags // ignore: cast_nullable_to_non_nullable
@@ -248,7 +254,7 @@ class __$$CommunityPostImplCopyWithImpl<$Res>
 }
 
 /// @nodoc
-@JsonSerializable()
+
 class _$CommunityPostImpl implements _CommunityPost {
   const _$CommunityPostImpl(
       {required this.id,
@@ -260,15 +266,14 @@ class _$CommunityPostImpl implements _CommunityPost {
       required this.createdAt,
       required final List<String> likedBy,
       required final List<CommunityComment> comments,
+      final List<String> sharedBy = const [],
       final List<String>? tags,
       this.location,
       this.postType})
       : _likedBy = likedBy,
         _comments = comments,
+        _sharedBy = sharedBy,
         _tags = tags;
-
-  factory _$CommunityPostImpl.fromJson(Map<String, dynamic> json) =>
-      _$$CommunityPostImplFromJson(json);
 
   @override
   final String id;
@@ -300,6 +305,15 @@ class _$CommunityPostImpl implements _CommunityPost {
     return EqualUnmodifiableListView(_comments);
   }
 
+  final List<String> _sharedBy;
+  @override
+  @JsonKey()
+  List<String> get sharedBy {
+    if (_sharedBy is EqualUnmodifiableListView) return _sharedBy;
+    // ignore: implicit_dynamic_type
+    return EqualUnmodifiableListView(_sharedBy);
+  }
+
   final List<String>? _tags;
   @override
   List<String>? get tags {
@@ -317,7 +331,7 @@ class _$CommunityPostImpl implements _CommunityPost {
 
   @override
   String toString() {
-    return 'CommunityPost(id: $id, userId: $userId, userName: $userName, userAvatar: $userAvatar, content: $content, imageUrl: $imageUrl, createdAt: $createdAt, likedBy: $likedBy, comments: $comments, tags: $tags, location: $location, postType: $postType)';
+    return 'CommunityPost(id: $id, userId: $userId, userName: $userName, userAvatar: $userAvatar, content: $content, imageUrl: $imageUrl, createdAt: $createdAt, likedBy: $likedBy, comments: $comments, sharedBy: $sharedBy, tags: $tags, location: $location, postType: $postType)';
   }
 
   @override
@@ -338,6 +352,7 @@ class _$CommunityPostImpl implements _CommunityPost {
                 other.createdAt == createdAt) &&
             const DeepCollectionEquality().equals(other._likedBy, _likedBy) &&
             const DeepCollectionEquality().equals(other._comments, _comments) &&
+            const DeepCollectionEquality().equals(other._sharedBy, _sharedBy) &&
             const DeepCollectionEquality().equals(other._tags, _tags) &&
             (identical(other.location, location) ||
                 other.location == location) &&
@@ -345,7 +360,6 @@ class _$CommunityPostImpl implements _CommunityPost {
                 other.postType == postType));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(
       runtimeType,
@@ -358,6 +372,7 @@ class _$CommunityPostImpl implements _CommunityPost {
       createdAt,
       const DeepCollectionEquality().hash(_likedBy),
       const DeepCollectionEquality().hash(_comments),
+      const DeepCollectionEquality().hash(_sharedBy),
       const DeepCollectionEquality().hash(_tags),
       location,
       postType);
@@ -369,13 +384,6 @@ class _$CommunityPostImpl implements _CommunityPost {
   @pragma('vm:prefer-inline')
   _$$CommunityPostImplCopyWith<_$CommunityPostImpl> get copyWith =>
       __$$CommunityPostImplCopyWithImpl<_$CommunityPostImpl>(this, _$identity);
-
-  @override
-  Map<String, dynamic> toJson() {
-    return _$$CommunityPostImplToJson(
-      this,
-    );
-  }
 }
 
 abstract class _CommunityPost implements CommunityPost {
@@ -389,12 +397,10 @@ abstract class _CommunityPost implements CommunityPost {
       required final DateTime createdAt,
       required final List<String> likedBy,
       required final List<CommunityComment> comments,
+      final List<String> sharedBy,
       final List<String>? tags,
       final String? location,
       final PostType? postType}) = _$CommunityPostImpl;
-
-  factory _CommunityPost.fromJson(Map<String, dynamic> json) =
-      _$CommunityPostImpl.fromJson;
 
   @override
   String get id;
@@ -415,6 +421,8 @@ abstract class _CommunityPost implements CommunityPost {
   @override
   List<CommunityComment> get comments;
   @override
+  List<String> get sharedBy;
+  @override
   List<String>? get tags;
   @override
   String? get location;
@@ -429,10 +437,6 @@ abstract class _CommunityPost implements CommunityPost {
       throw _privateConstructorUsedError;
 }
 
-CommunityComment _$CommunityCommentFromJson(Map<String, dynamic> json) {
-  return _CommunityComment.fromJson(json);
-}
-
 /// @nodoc
 mixin _$CommunityComment {
   String get id => throw _privateConstructorUsedError;
@@ -442,9 +446,6 @@ mixin _$CommunityComment {
   String get content => throw _privateConstructorUsedError;
   DateTime get createdAt => throw _privateConstructorUsedError;
   List<String> get likedBy => throw _privateConstructorUsedError;
-
-  /// Serializes this CommunityComment to a JSON map.
-  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
 
   /// Create a copy of CommunityComment
   /// with the given fields replaced by the non-null parameter values.
@@ -598,7 +599,7 @@ class __$$CommunityCommentImplCopyWithImpl<$Res>
 }
 
 /// @nodoc
-@JsonSerializable()
+
 class _$CommunityCommentImpl implements _CommunityComment {
   const _$CommunityCommentImpl(
       {required this.id,
@@ -609,9 +610,6 @@ class _$CommunityCommentImpl implements _CommunityComment {
       required this.createdAt,
       required final List<String> likedBy})
       : _likedBy = likedBy;
-
-  factory _$CommunityCommentImpl.fromJson(Map<String, dynamic> json) =>
-      _$$CommunityCommentImplFromJson(json);
 
   @override
   final String id;
@@ -655,7 +653,6 @@ class _$CommunityCommentImpl implements _CommunityComment {
             const DeepCollectionEquality().equals(other._likedBy, _likedBy));
   }
 
-  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(runtimeType, id, userId, userName, userAvatar,
       content, createdAt, const DeepCollectionEquality().hash(_likedBy));
@@ -668,13 +665,6 @@ class _$CommunityCommentImpl implements _CommunityComment {
   _$$CommunityCommentImplCopyWith<_$CommunityCommentImpl> get copyWith =>
       __$$CommunityCommentImplCopyWithImpl<_$CommunityCommentImpl>(
           this, _$identity);
-
-  @override
-  Map<String, dynamic> toJson() {
-    return _$$CommunityCommentImplToJson(
-      this,
-    );
-  }
 }
 
 abstract class _CommunityComment implements CommunityComment {
@@ -686,9 +676,6 @@ abstract class _CommunityComment implements CommunityComment {
       required final String content,
       required final DateTime createdAt,
       required final List<String> likedBy}) = _$CommunityCommentImpl;
-
-  factory _CommunityComment.fromJson(Map<String, dynamic> json) =
-      _$CommunityCommentImpl.fromJson;
 
   @override
   String get id;

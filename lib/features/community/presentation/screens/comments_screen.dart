@@ -4,6 +4,7 @@ import '../../../../config/theme/app_theme.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../domain/models/community_post.dart';
 import '../providers/community_provider.dart';
+import '../../../authentication/presentation/providers/auth_providers.dart';
 
 class CommentsScreen extends ConsumerStatefulWidget {
   final CommunityPost post;
@@ -31,31 +32,73 @@ class _CommentsScreenState extends ConsumerState<CommentsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final posts = ref.watch(communityPostsProvider);
-    final currentUser = ref.watch(currentUserProvider);
+    // Get the current auth state
+    final authState = ref.watch(authStateProvider);
     
-    // Find the updated post
-    final updatedPost = posts.firstWhere(
-      (p) => p.id == widget.post.id,
-      orElse: () => widget.post,
+    // Use stream provider for real-time post updates, but show UI immediately
+    final postsAsync = ref.watch(communityPostsStreamProvider);
+    
+    // Find the most up-to-date post or fallback to the original
+    final currentPost = postsAsync.maybeWhen(
+      data: (posts) {
+        try {
+          return posts.firstWhere((p) => p.id == widget.post.id);
+        } catch (e) {
+          return widget.post; // Fallback to original post
+        }
+      },
+      orElse: () => widget.post, // Use original post while loading/error
     );
-
+    
+    // Get current user from AuthState
+    final currentUser = authState.maybeWhen(
+      authenticated: (user) => user,
+      orElse: () => null,
+    );
+    
+    // Build UI immediately with available data
+    return _buildCommentsUI(context, currentPost, currentUser);
+  }
+  
+  Widget _buildCommentsUI(BuildContext context, CommunityPost updatedPost, authUser) {
+    // Check if we're still loading updates from the stream
+    final postsAsync = ref.watch(communityPostsStreamProvider);
+    final isLoadingUpdates = postsAsync.isLoading;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Scaffold(
       appBar: AppBar(
         title: const Text('Comments'),
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
+        actions: [
+          if (isLoadingUpdates)
+            const Padding(
+              padding: EdgeInsets.only(right: 16.0),
+              child: Center(
+                child: SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: AppColors.primary,
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
+      resizeToAvoidBottomInset: true, // This is crucial for proper keyboard handling
       body: Column(
         children: [
           // Post summary
           Container(
             padding: const EdgeInsets.all(AppConstants.paddingMedium),
             decoration: BoxDecoration(
-              color: AppColors.grey50,
+              color: isDark ? const Color(0xFF2D2D2D) : AppColors.grey50,
               border: Border(
                 bottom: BorderSide(
-                  color: AppColors.grey200,
+                  color: isDark ? AppColors.grey700 : AppColors.grey200,
                   width: 1,
                 ),
               ),
@@ -86,12 +129,15 @@ class _CommentsScreenState extends ConsumerState<CommentsScreen> {
                         updatedPost.userName,
                         style: Theme.of(context).textTheme.titleSmall?.copyWith(
                           fontWeight: FontWeight.bold,
+                          color: isDark ? AppColors.surface : AppColors.grey900,
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         updatedPost.content,
-                        style: Theme.of(context).textTheme.bodySmall,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: isDark ? AppColors.grey200 : AppColors.grey700,
+                        ),
                         maxLines: 3,
                         overflow: TextOverflow.ellipsis,
                       ),
@@ -115,14 +161,16 @@ class _CommentsScreenState extends ConsumerState<CommentsScreen> {
                       return _CommentItem(
                         comment: comment,
                         postId: updatedPost.id,
-                        currentUserId: currentUser.id,
+                        currentUserId: authUser?.id ?? '',
                       );
                     },
                   ),
           ),
           
-          // Comment input
-          _buildCommentInput(currentUser),
+          // Comment input - Now properly positioned
+          SafeArea(
+            child: _buildCommentInput(authUser),
+          ),
         ],
       ),
     );
@@ -153,14 +201,18 @@ class _CommentsScreenState extends ConsumerState<CommentsScreen> {
               'No comments yet',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
-                color: AppColors.grey700,
+                color: Theme.of(context).brightness == Brightness.dark 
+                    ? AppColors.grey200 
+                    : AppColors.grey700,
               ),
             ),
             const SizedBox(height: 8),
             Text(
               'Be the first to share your thoughts!',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppColors.grey600,
+                color: Theme.of(context).brightness == Brightness.dark 
+                    ? AppColors.grey400 
+                    : AppColors.grey600,
               ),
               textAlign: TextAlign.center,
             ),
@@ -170,33 +222,30 @@ class _CommentsScreenState extends ConsumerState<CommentsScreen> {
     );
   }
 
-  Widget _buildCommentInput(CommunityUser currentUser) {
+  Widget _buildCommentInput(authUser) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Container(
       decoration: BoxDecoration(
         color: Theme.of(context).scaffoldBackgroundColor,
         border: Border(
           top: BorderSide(
-            color: AppColors.grey200,
+            color: isDark ? AppColors.grey700 : AppColors.grey200,
             width: 1,
           ),
         ),
       ),
-      padding: EdgeInsets.only(
-        left: AppConstants.paddingMedium,
-        right: AppConstants.paddingMedium,
-        top: AppConstants.paddingMedium,
-        bottom: MediaQuery.of(context).viewInsets.bottom + AppConstants.paddingMedium,
-      ),
+      padding: const EdgeInsets.all(AppConstants.paddingMedium),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           CircleAvatar(
             radius: 16,
             backgroundColor: AppColors.primary.withOpacity(0.1),
-            backgroundImage: currentUser.avatar != null
-                ? NetworkImage(currentUser.avatar!)
+            backgroundImage: authUser?.photoUrl != null
+                ? NetworkImage(authUser!.photoUrl!)
                 : null,
-            child: currentUser.avatar == null
+            child: authUser?.photoUrl == null
                 ? const Icon(
                     Icons.person,
                     color: AppColors.primary,
@@ -212,15 +261,25 @@ class _CommentsScreenState extends ConsumerState<CommentsScreen> {
                 controller: _commentController,
                 maxLines: null,
                 textCapitalization: TextCapitalization.sentences,
+                style: TextStyle(
+                  color: isDark ? AppColors.surface : AppColors.grey900,
+                ),
                 decoration: InputDecoration(
                   hintText: 'Write a comment...',
+                  hintStyle: TextStyle(
+                    color: isDark ? AppColors.grey400 : AppColors.grey500,
+                  ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(24),
-                    borderSide: BorderSide(color: AppColors.grey300),
+                    borderSide: BorderSide(
+                      color: isDark ? AppColors.grey600 : AppColors.grey300,
+                    ),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(24),
-                    borderSide: BorderSide(color: AppColors.grey300),
+                    borderSide: BorderSide(
+                      color: isDark ? AppColors.grey600 : AppColors.grey300,
+                    ),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(24),
@@ -231,10 +290,10 @@ class _CommentsScreenState extends ConsumerState<CommentsScreen> {
                     vertical: 8,
                   ),
                   filled: true,
-                  fillColor: AppColors.grey50,
+                  fillColor: isDark ? const Color(0xFF2D2D2D) : AppColors.grey50,
                 ),
                 onChanged: (_) => setState(() {}),
-                onSubmitted: (_) => _postComment(currentUser),
+                onSubmitted: (_) => authUser != null ? _postComment(authUser) : null,
               ),
             ),
           ),
@@ -252,9 +311,9 @@ class _CommentsScreenState extends ConsumerState<CommentsScreen> {
                   ),
                 )
               : IconButton(
-                  onPressed: _commentController.text.trim().isEmpty
+                  onPressed: _commentController.text.trim().isEmpty || authUser == null
                       ? null
-                      : () => _postComment(currentUser),
+                      : () => _postComment(authUser),
                   icon: const Icon(Icons.send),
                   color: AppColors.primary,
                   disabledColor: AppColors.grey400,
@@ -264,8 +323,8 @@ class _CommentsScreenState extends ConsumerState<CommentsScreen> {
     );
   }
 
-  Future<void> _postComment(CommunityUser currentUser) async {
-    if (_commentController.text.trim().isEmpty || _isPosting) return;
+  Future<void> _postComment(authUser) async {
+    if (_commentController.text.trim().isEmpty || _isPosting || authUser == null) return;
 
     final content = _commentController.text.trim();
     _commentController.clear();
@@ -278,8 +337,6 @@ class _CommentsScreenState extends ConsumerState<CommentsScreen> {
       await ref.read(communityPostsProvider.notifier).addComment(
         widget.post.id,
         content,
-        currentUser.id,
-        currentUser.name,
       );
 
       // Scroll to bottom to show the new comment
@@ -330,6 +387,7 @@ class _CommentItem extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final isLiked = comment.isLikedBy(currentUserId);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
@@ -358,7 +416,7 @@ class _CommentItem extends ConsumerWidget {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppColors.grey100,
+                    color: isDark ? const Color(0xFF2D2D2D) : AppColors.grey100,
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: Column(
@@ -368,12 +426,15 @@ class _CommentItem extends ConsumerWidget {
                         comment.userName,
                         style: Theme.of(context).textTheme.titleSmall?.copyWith(
                           fontWeight: FontWeight.bold,
+                          color: isDark ? AppColors.surface : AppColors.grey900,
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         comment.content,
-                        style: Theme.of(context).textTheme.bodyMedium,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: isDark ? AppColors.grey200 : AppColors.grey800,
+                        ),
                       ),
                     ],
                   ),
@@ -384,7 +445,7 @@ class _CommentItem extends ConsumerWidget {
                     Text(
                       comment.timeAgo,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.grey600,
+                        color: isDark ? AppColors.grey400 : AppColors.grey600,
                       ),
                     ),
                     const SizedBox(width: 16),
@@ -415,7 +476,7 @@ class _CommentItem extends ConsumerWidget {
                               Text(
                                 comment.likesCount.toString(),
                                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: isLiked ? Colors.red : AppColors.grey600,
+                                  color: isLiked ? Colors.red : (isDark ? AppColors.grey400 : AppColors.grey600),
                                   fontSize: 12,
                                 ),
                               ),

@@ -1,6 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import '../../domain/models/auth_result.dart';
-import '../../domain/models/user_model.dart';
+import '../../domain/entities/user.dart' as domain;
 import '../../domain/repositories/auth_repository.dart';
 
 class FirebaseAuthRepository implements AuthRepository {
@@ -10,17 +9,17 @@ class FirebaseAuthRepository implements AuthRepository {
       : _firebaseAuth = firebaseAuth ?? FirebaseAuth.instance;
 
   @override
-  Stream<UserModel?> get authStateChanges {
-    return _firebaseAuth.authStateChanges().map(_mapFirebaseUser);
+  Stream<domain.User?> get authStateChanges {
+    return _firebaseAuth.authStateChanges().map(_mapFirebaseUserToDomain);
   }
 
   @override
-  UserModel? get currentUser {
-    return _mapFirebaseUser(_firebaseAuth.currentUser);
+  Future<domain.User?> getCurrentUser() async {
+    return _mapFirebaseUserToDomain(_firebaseAuth.currentUser);
   }
 
   @override
-  Future<AuthResult> signInWithEmailAndPassword({
+  Future<domain.User?> signInWithEmailAndPassword({
     required String email,
     required String password,
   }) async {
@@ -30,24 +29,19 @@ class FirebaseAuthRepository implements AuthRepository {
         password: password,
       );
       
-      final user = _mapFirebaseUser(credential.user);
-      if (user != null) {
-        return AuthResult.success(user);
-      } else {
-        return const AuthResult.failure('Sign in failed');
-      }
+      return _mapFirebaseUserToDomain(credential.user);
     } on FirebaseAuthException catch (e) {
-      return AuthResult.failure(_getErrorMessage(e));
+      throw Exception(_getErrorMessage(e));
     } catch (e) {
-      return AuthResult.failure('An unexpected error occurred');
+      throw Exception('An unexpected error occurred');
     }
   }
 
   @override
-  Future<AuthResult> signUpWithEmailAndPassword({
+  Future<domain.User> signUpWithEmailAndPassword({
+    required String name,
     required String email,
     required String password,
-    String? displayName,
   }) async {
     try {
       final credential = await _firebaseAuth.createUserWithEmailAndPassword(
@@ -56,21 +50,21 @@ class FirebaseAuthRepository implements AuthRepository {
       );
       
       // Update display name if provided
-      if (displayName != null && credential.user != null) {
-        await credential.user!.updateDisplayName(displayName.trim());
+      if (name.isNotEmpty && credential.user != null) {
+        await credential.user!.updateDisplayName(name.trim());
         await credential.user!.reload();
       }
       
-      final user = _mapFirebaseUser(_firebaseAuth.currentUser);
+      final user = _mapFirebaseUserToDomain(_firebaseAuth.currentUser);
       if (user != null) {
-        return AuthResult.success(user);
+        return user;
       } else {
-        return const AuthResult.failure('Sign up failed');
+        throw Exception('Sign up failed');
       }
     } on FirebaseAuthException catch (e) {
-      return AuthResult.failure(_getErrorMessage(e));
+      throw Exception(_getErrorMessage(e));
     } catch (e) {
-      return AuthResult.failure('An unexpected error occurred');
+      throw Exception('An unexpected error occurred');
     }
   }
 
@@ -80,81 +74,28 @@ class FirebaseAuthRepository implements AuthRepository {
   }
 
   @override
-  Future<AuthResult> sendPasswordResetEmail(String email) async {
+  Future<void> sendPasswordResetEmail({required String email}) async {
     try {
       await _firebaseAuth.sendPasswordResetEmail(email: email.trim());
-      return const AuthResult.success(
-        UserModel(uid: '', email: ''), // Placeholder for success result
-      );
     } on FirebaseAuthException catch (e) {
-      return AuthResult.failure(_getErrorMessage(e));
+      throw Exception(_getErrorMessage(e));
     } catch (e) {
-      return AuthResult.failure('An unexpected error occurred');
+      throw Exception('An unexpected error occurred');
     }
   }
 
-  @override
-  Future<AuthResult> deleteAccount() async {
-    try {
-      final user = _firebaseAuth.currentUser;
-      if (user != null) {
-        await user.delete();
-        return const AuthResult.success(
-          UserModel(uid: '', email: ''), // Placeholder for success result
-        );
-      } else {
-        return const AuthResult.failure('No user signed in');
-      }
-    } on FirebaseAuthException catch (e) {
-      return AuthResult.failure(_getErrorMessage(e));
-    } catch (e) {
-      return AuthResult.failure('An unexpected error occurred');
-    }
-  }
 
-  @override
-  Future<AuthResult> updateProfile({
-    String? displayName,
-    String? photoUrl,
-  }) async {
-    try {
-      final user = _firebaseAuth.currentUser;
-      if (user != null) {
-        if (displayName != null) {
-          await user.updateDisplayName(displayName);
-        }
-        if (photoUrl != null) {
-          await user.updatePhotoURL(photoUrl);
-        }
-        await user.reload();
-        
-        final updatedUser = _mapFirebaseUser(_firebaseAuth.currentUser);
-        if (updatedUser != null) {
-          return AuthResult.success(updatedUser);
-        } else {
-          return const AuthResult.failure('Update failed');
-        }
-      } else {
-        return const AuthResult.failure('No user signed in');
-      }
-    } on FirebaseAuthException catch (e) {
-      return AuthResult.failure(_getErrorMessage(e));
-    } catch (e) {
-      return AuthResult.failure('An unexpected error occurred');
-    }
-  }
 
-  UserModel? _mapFirebaseUser(User? firebaseUser) {
+  domain.User? _mapFirebaseUserToDomain(User? firebaseUser) {
     if (firebaseUser == null) return null;
     
-    return UserModel(
-      uid: firebaseUser.uid,
+    return domain.User(
+      id: firebaseUser.uid,
+      name: firebaseUser.displayName ?? '',
       email: firebaseUser.email ?? '',
-      displayName: firebaseUser.displayName,
       photoUrl: firebaseUser.photoURL,
-      isEmailVerified: firebaseUser.emailVerified,
-      createdAt: firebaseUser.metadata.creationTime,
-      lastSignInTime: firebaseUser.metadata.lastSignInTime,
+      createdAt: firebaseUser.metadata.creationTime ?? DateTime.now(),
+      lastLoginAt: firebaseUser.metadata.lastSignInTime,
     );
   }
 
