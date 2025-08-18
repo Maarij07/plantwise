@@ -1969,11 +1969,19 @@ class _TaskCard extends StatelessWidget {
                 color: AppColors.grey600,
               ),
               const SizedBox(width: 4),
-              Text(subtitle),
+              Flexible(
+                child: Text(
+                  subtitle,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
               const Text(' • '),
-              Text(
-                timeInfo,
-                style: TextStyle(color: priorityColor),
+              Flexible(
+                child: Text(
+                  timeInfo,
+                  style: TextStyle(color: priorityColor),
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
             ],
           ),
@@ -2337,16 +2345,22 @@ class _TaskCard extends StatelessWidget {
                   color: AppColors.grey600,
                 ),
                 const SizedBox(width: 4),
-                Text(
-                  subtitle,
-                  style: TextStyle(fontSize: isTablet ? 16 : 14),
+                Flexible(
+                  child: Text(
+                    subtitle,
+                    style: TextStyle(fontSize: isTablet ? 16 : 14),
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
                 const Text(' • '),
-                Text(
-                  timeInfo,
-                  style: TextStyle(
-                    color: priorityColor,
-                    fontSize: isTablet ? 16 : 14,
+                Flexible(
+                  child: Text(
+                    timeInfo,
+                    style: TextStyle(
+                      color: priorityColor,
+                      fontSize: isTablet ? 16 : 14,
+                    ),
+                    overflow: TextOverflow.ellipsis,
                   ),
                 ),
               ],

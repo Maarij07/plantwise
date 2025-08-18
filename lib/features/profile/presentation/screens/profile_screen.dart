@@ -56,126 +56,44 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
   @override
   Widget build(BuildContext context) {
     final landSize = ref.watch(landSizeProvider);
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isTablet = screenWidth > 600;
+    final isLargeScreen = screenWidth > 1024;
+    
+    // Responsive padding based on screen size
+    final horizontalPadding = isLargeScreen 
+        ? 32.0 
+        : isTablet 
+            ? 24.0 
+            : AppConstants.paddingMedium;
 
     return Scaffold(
+      backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Profile'),
+        title: Text(
+          'Profile',
+          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: AppColors.primary,
+            fontSize: isTablet ? 28 : 24,
+          ),
+        ),
         automaticallyImplyLeading: false,
+        backgroundColor: AppColors.background,
+        elevation: 0,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppConstants.paddingMedium),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Enhanced Profile Header Card (Keep Original)
-            Container(
-              width: double.infinity,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    AppColors.primary,
-                    AppColors.primaryDark,
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: AppColors.primary.withOpacity(0.3),
-                    spreadRadius: 0,
-                    blurRadius: 20,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(24),
-                child: Row(
-                  children: [
-                    GestureDetector(
-                      onTap: () => _showAvatarSelector(context),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.white, width: 3),
-                        ),
-                        child: CircleAvatar(
-                          radius: 45,
-                          backgroundColor: Colors.white,
-                          child: Stack(
-                            children: [
-                              CircleAvatar(
-                                radius: 40,
-                                backgroundColor: AppColors.background,
-                                child: _buildDefaultAvatar('male'),
-                              ),
-                              Positioned(
-                                bottom: 2,
-                                right: 2,
-                                child: Container(
-                                  width: 24,
-                                  height: 24,
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    shape: BoxShape.circle,
-                                    border: Border.all(color: AppColors.primary, width: 2),
-                                  ),
-                                  child: const Icon(
-                                    Icons.edit,
-                                    size: 12,
-                                    color: AppColors.primary,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 20),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'John Doe',
-                            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            'Plant Enthusiast',
-                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              color: Colors.white.withOpacity(0.9),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.eco,
-                                size: 16,
-                                color: Colors.white.withOpacity(0.8),
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                '15 Plants Growing',
-                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                  color: Colors.white.withOpacity(0.8),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+      body: FadeTransition(
+        opacity: _fadeAnimation,
+        child: SlideTransition(
+          position: _slideAnimation,
+          child: SingleChildScrollView(
+            padding: EdgeInsets.all(horizontalPadding),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Profile Header Section
+                _buildSimpleProfileHeader(context, isTablet),
+                const SizedBox(height: 24),
             
             const SizedBox(height: 24),
 
@@ -410,6 +328,158 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
 
             const SizedBox(height: 24),
 
+            // Premium Section
+            Text(
+              'Premium Features',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Premium Become Expert Card
+            Container(
+              margin: const EdgeInsets.only(bottom: 16),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    AppColors.primary,
+                    AppColors.primary.withOpacity(0.8),
+                  ],
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primary.withOpacity(0.3),
+                    blurRadius: 12,
+                    spreadRadius: 0,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () => _showBecomeExpertWizard(context),
+                  borderRadius: BorderRadius.circular(16),
+                  child: Padding(
+                    padding: EdgeInsets.all(isTablet ? 20 : 16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              width: isTablet ? 48 : 40,
+                              height: isTablet ? 48 : 40,
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(isTablet ? 24 : 20),
+                                border: Border.all(
+                                  color: Colors.white.withOpacity(0.3),
+                                  width: 2,
+                                ),
+                              ),
+                              child: Icon(
+                                Icons.school_outlined,
+                                color: Colors.white,
+                                size: isTablet ? 24 : 20,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Flexible(
+                                        child: Text(
+                                          'Become an Expert',
+                                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.white,
+                                            fontSize: isTablet ? 18 : 16,
+                                          ),
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 6,
+                                          vertical: 2,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.warning.withOpacity(0.9),
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: Text(
+                                          'PRO',
+                                          style: TextStyle(
+                                            color: Colors.white,
+                                            fontSize: isTablet ? 10 : 9,
+                                            fontWeight: FontWeight.bold,
+                                            letterSpacing: 0.5,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Icon(
+                              Icons.arrow_forward_ios,
+                              color: Colors.white.withOpacity(0.7),
+                              size: isTablet ? 20 : 16,
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          'Share your knowledge and help the community grow',
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Colors.white.withOpacity(0.9),
+                            fontSize: isTablet ? 14 : 12,
+                            height: 1.3,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.verified,
+                              color: Colors.white.withOpacity(0.8),
+                              size: isTablet ? 16 : 14,
+                            ),
+                            const SizedBox(width: 6),
+                            Flexible(
+                              child: Text(
+                                'Get verified expert badge',
+                                style: TextStyle(
+                                  color: Colors.white.withOpacity(0.8),
+                                  fontSize: isTablet ? 12 : 11,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
             // App Settings Section
             Text(
               'App Settings',
@@ -459,25 +529,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                     subtitle: const Text('Light, Dark, or System'),
                     trailing: const Icon(Icons.chevron_right),
                     onTap: () => _showThemeDialog(context),
-                  ),
-                  const Divider(height: 1),
-                  ListTile(
-                    leading: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: const Icon(
-                        Icons.language_outlined,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                    title: const Text('Language'),
-                    subtitle: const Text('App language preferences'),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () => _showLanguageDialog(context),
                   ),
                 ],
               ),
@@ -577,7 +628,95 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
               ),
             ),
 
-            const SizedBox(height: 32),
+                const SizedBox(height: 32),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Build Simple Profile Header
+  Widget _buildSimpleProfileHeader(BuildContext context, bool isTablet) {
+    return Card(
+      elevation: 2,
+      child: Padding(
+        padding: EdgeInsets.all(isTablet ? 24 : 16),
+        child: Row(
+          children: [
+            GestureDetector(
+              onTap: () => _showAvatarSelector(context),
+              child: Stack(
+                children: [
+                  CircleAvatar(
+                    radius: isTablet ? 40 : 35,
+                    backgroundColor: AppColors.primary.withOpacity(0.1),
+                    child: _buildDefaultAvatar('male'),
+                  ),
+                  Positioned(
+                    bottom: 2,
+                    right: 2,
+                    child: Container(
+                      width: isTablet ? 24 : 20,
+                      height: isTablet ? 24 : 20,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 2),
+                      ),
+                      child: Icon(
+                        Icons.edit,
+                        size: isTablet ? 12 : 10,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'John Doe',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      fontSize: isTablet ? 24 : 20,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Plant Enthusiast',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: AppColors.grey600,
+                      fontSize: isTablet ? 16 : 14,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.eco,
+                        size: isTablet ? 18 : 16,
+                        color: AppColors.success,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        '15 Plants Growing',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppColors.success,
+                          fontWeight: FontWeight.w500,
+                          fontSize: isTablet ? 14 : 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -652,39 +791,18 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
   }
 
   void _showAvatarSelector(BuildContext context) {
-    String? selectedSeed;
-    
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Choose Your Avatar'),
-        content: SizedBox(
-          width: double.maxFinite,
-          height: 400,
-          child: AvatarSelector(
-            gender: 'male', // TODO: Get from user profile
-            currentSeed: _currentAvatarSeed,
-            onAvatarSelected: (seed) {
-              selectedSeed = seed;
-            },
-          ),
+        content: const Text(
+          'Avatar selection feature will be available soon. '
+          'For now, you can customize your profile picture in the Edit Profile section.',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              if (selectedSeed != null) {
-                setState(() {
-                  _currentAvatarSeed = selectedSeed!;
-                });
-                // TODO: Save to user profile/preferences
-              }
-              Navigator.of(context).pop();
-            },
-            child: const Text('Save'),
+            child: const Text('Got it'),
           ),
         ],
       ),
@@ -798,51 +916,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     );
   }
 
-  void _showLanguageDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Language'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('Select your preferred language:'),
-            const SizedBox(height: 16),
-            ListTile(
-              leading: const Text('🇺🇸'),
-              title: const Text('English'),
-              onTap: () {
-                Navigator.of(context).pop();
-                // TODO: Set English
-              },
-            ),
-            ListTile(
-              leading: const Text('🇪🇸'),
-              title: const Text('Español'),
-              onTap: () {
-                Navigator.of(context).pop();
-                // TODO: Set Spanish
-              },
-            ),
-            ListTile(
-              leading: const Text('🇫🇷'),
-              title: const Text('Français'),
-              onTap: () {
-                Navigator.of(context).pop();
-                // TODO: Set French
-              },
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Cancel'),
-          ),
-        ],
-      ),
-    );
-  }
 
   void _showHelpDialog(BuildContext context) {
     showDialog(
@@ -1021,6 +1094,1312 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
               context.go(AppConstants.signInRoute);
             },
             child: const Text('Sign Out'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showBecomeExpertWizard(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => const BecomeExpertWizard(),
+        fullscreenDialog: true,
+      ),
+    );
+  }
+}
+
+// Become Expert Wizard Widget
+class BecomeExpertWizard extends StatefulWidget {
+  const BecomeExpertWizard({Key? key}) : super(key: key);
+  
+  @override
+  State<BecomeExpertWizard> createState() => _BecomeExpertWizardState();
+}
+
+class _BecomeExpertWizardState extends State<BecomeExpertWizard> {
+  final PageController _pageController = PageController();
+  int _currentStep = 0;
+  final int _totalSteps = 4;
+
+  // Form data
+  String _selectedSpecialty = '';
+  String _experience = '';
+  String _bio = '';
+  List<String> _credentials = [];
+  final TextEditingController _bioController = TextEditingController();
+  final TextEditingController _credentialController = TextEditingController();
+
+  final List<String> _specialties = [
+    'Indoor Plant Care',
+    'Outdoor Gardening',
+    'Succulent & Cacti',
+    'Plant Disease & Pests',
+    'Plant Propagation',
+    'Hydroponics',
+    'Organic Gardening',
+    'Tropical Plants',
+    'Herbs & Vegetables',
+    'Landscaping Design',
+  ];
+
+  final List<String> _experienceLevels = [
+    '1-2 years',
+    '3-5 years',
+    '5-10 years',
+    '10+ years',
+    'Professional/Certified',
+  ];
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    _bioController.dispose();
+    _credentialController.dispose();
+    super.dispose();
+  }
+
+  void _nextStep() {
+    if (_currentStep < _totalSteps - 1) {
+      _pageController.nextPage(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+      setState(() {
+        _currentStep++;
+      });
+    }
+  }
+
+  void _previousStep() {
+    if (_currentStep > 0) {
+      _pageController.previousPage(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+      setState(() {
+        _currentStep--;
+      });
+    }
+  }
+
+  bool _canProceed() {
+    switch (_currentStep) {
+      case 0:
+        return _selectedSpecialty.isNotEmpty;
+      case 1:
+        return _experience.isNotEmpty;
+      case 2:
+        return _bioController.text.trim().isNotEmpty;
+      case 3:
+        return true; // Review step
+      default:
+        return false;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isTablet = screenWidth > 600;
+    
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        title: Text(
+          'Become an Expert',
+          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: AppColors.primary,
+            fontSize: isTablet ? 24 : 20,
+          ),
+        ),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: _currentStep > 0
+            ? IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: _previousStep,
+              )
+            : IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+      ),
+      body: Column(
+        children: [
+          // Progress Indicator
+          Container(
+            padding: EdgeInsets.all(isTablet ? 24 : 16),
+            child: Column(
+              children: [
+                Row(
+                  children: List.generate(
+                    _totalSteps,
+                    (index) => Expanded(
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 2),
+                        height: 4,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(2),
+                          gradient: index <= _currentStep
+                              ? LinearGradient(
+                                  colors: [
+                                    AppColors.primary,
+                                    AppColors.primary.withOpacity(0.7),
+                                  ],
+                                )
+                              : null,
+                          color: index <= _currentStep
+                              ? null
+                              : AppColors.grey200,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Step ${_currentStep + 1} of $_totalSteps',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: AppColors.grey600,
+                    fontSize: isTablet ? 14 : 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Wizard Content
+          Expanded(
+            child: PageView(
+              controller: _pageController,
+              physics: const NeverScrollableScrollPhysics(),
+              children: [
+                _buildSpecialtyStep(isTablet),
+                _buildExperienceStep(isTablet),
+                _buildBioStep(isTablet),
+                _buildReviewStep(isTablet),
+              ],
+            ),
+          ),
+          // Bottom Navigation
+          Container(
+            padding: EdgeInsets.all(isTablet ? 24 : 16),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.1),
+                  blurRadius: 10,
+                  offset: const Offset(0, -5),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                if (_currentStep > 0)
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: _previousStep,
+                      style: OutlinedButton.styleFrom(
+                        padding: EdgeInsets.symmetric(vertical: isTablet ? 16 : 12),
+                        side: const BorderSide(color: AppColors.primary),
+                      ),
+                      child: Text(
+                        'Previous',
+                        style: TextStyle(fontSize: isTablet ? 16 : 14),
+                      ),
+                    ),
+                  ),
+                if (_currentStep > 0) const SizedBox(width: 16),
+                Expanded(
+                  flex: _currentStep == 0 ? 1 : 1,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(8),
+                      gradient: _canProceed()
+                          ? LinearGradient(
+                              colors: [
+                                AppColors.primary,
+                                AppColors.primary.withOpacity(0.8),
+                              ],
+                            )
+                          : null,
+                    ),
+                    child: ElevatedButton(
+                      onPressed: _canProceed()
+                          ? (_currentStep == _totalSteps - 1
+                              ? _submitApplication
+                              : _nextStep)
+                          : null,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _canProceed()
+                            ? Colors.transparent
+                            : AppColors.grey300,
+                        foregroundColor: Colors.white,
+                        shadowColor: Colors.transparent,
+                        padding: EdgeInsets.symmetric(vertical: isTablet ? 16 : 12),
+                      ),
+                      child: Text(
+                        _currentStep == _totalSteps - 1
+                            ? 'Submit Application'
+                            : 'Continue',
+                        style: TextStyle(
+                          fontSize: isTablet ? 16 : 14,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSpecialtyStep(bool isTablet) {
+    return SingleChildScrollView(
+      padding: EdgeInsets.all(isTablet ? 24 : 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header with premium styling
+          Container(
+            padding: EdgeInsets.all(isTablet ? 20 : 16),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  const Color(0xFFFFD700).withOpacity(0.1),
+                  const Color(0xFFFFA500).withOpacity(0.05),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: const Color(0xFFFFD700).withOpacity(0.3),
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFD700).withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    Icons.psychology,
+                    color: const Color(0xFFFFA500),
+                    size: isTablet ? 32 : 24,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Choose Your Specialty',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          fontSize: isTablet ? 20 : 18,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Select the area where you have the most expertise',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: AppColors.grey600,
+                          fontSize: isTablet ? 14 : 13,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+          // Specialty options
+          GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: isTablet ? 3 : 2,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+              childAspectRatio: isTablet ? 2.5 : 2.2,
+            ),
+            itemCount: _specialties.length,
+            itemBuilder: (context, index) {
+              final specialty = _specialties[index];
+              final isSelected = _selectedSpecialty == specialty;
+              return GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _selectedSpecialty = specialty;
+                  });
+                },
+                child: Container(
+                  padding: EdgeInsets.all(isTablet ? 16 : 12),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? const Color(0xFFFFD700).withOpacity(0.1)
+                        : Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: isSelected
+                          ? const Color(0xFFFFD700)
+                          : AppColors.grey200,
+                      width: isSelected ? 2 : 1,
+                    ),
+                    boxShadow: isSelected
+                        ? [
+                            BoxShadow(
+                              color: const Color(0xFFFFD700).withOpacity(0.3),
+                              blurRadius: 8,
+                              spreadRadius: 0,
+                            ),
+                          ]
+                        : [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 4,
+                              spreadRadius: 0,
+                            ),
+                          ],
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        _getSpecialtyIcon(specialty),
+                        color: isSelected
+                            ? const Color(0xFFFFA500)
+                            : AppColors.grey600,
+                        size: isTablet ? 24 : 20,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        specialty,
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          fontWeight: isSelected
+                              ? FontWeight.bold
+                              : FontWeight.w500,
+                          color: isSelected
+                              ? const Color(0xFFFFA500)
+                              : AppColors.grey700,
+                          fontSize: isTablet ? 12 : 11,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildExperienceStep(bool isTablet) {
+    return SingleChildScrollView(
+      padding: EdgeInsets.all(isTablet ? 24 : 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Container(
+            padding: EdgeInsets.all(isTablet ? 20 : 16),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  const Color(0xFFFFD700).withOpacity(0.1),
+                  const Color(0xFFFFA500).withOpacity(0.05),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: const Color(0xFFFFD700).withOpacity(0.3),
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFD700).withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    Icons.timeline,
+                    color: const Color(0xFFFFA500),
+                    size: isTablet ? 32 : 24,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Experience Level',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          fontSize: isTablet ? 20 : 18,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'How long have you been working with plants?',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: AppColors.grey600,
+                          fontSize: isTablet ? 14 : 13,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+          // Experience options
+          Column(
+            children: _experienceLevels.map((level) {
+              final isSelected = _experience == level;
+              return Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                child: GestureDetector(
+                  onTap: () {
+                    setState(() {
+                      _experience = level;
+                    });
+                  },
+                  child: Container(
+                    padding: EdgeInsets.all(isTablet ? 20 : 16),
+                    decoration: BoxDecoration(
+                      color: isSelected
+                          ? const Color(0xFFFFD700).withOpacity(0.1)
+                          : Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isSelected
+                            ? const Color(0xFFFFD700)
+                            : AppColors.grey200,
+                        width: isSelected ? 2 : 1,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: isSelected
+                              ? const Color(0xFFFFD700).withOpacity(0.2)
+                              : Colors.black.withOpacity(0.05),
+                          blurRadius: 8,
+                          spreadRadius: 0,
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: isTablet ? 24 : 20,
+                          height: isTablet ? 24 : 20,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: isSelected
+                                  ? const Color(0xFFFFD700)
+                                  : AppColors.grey400,
+                              width: 2,
+                            ),
+                            color: isSelected
+                                ? const Color(0xFFFFD700)
+                                : Colors.transparent,
+                          ),
+                          child: isSelected
+                              ? const Icon(
+                                  Icons.check,
+                                  size: 12,
+                                  color: Colors.white,
+                                )
+                              : null,
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Text(
+                            level,
+                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                              fontWeight: isSelected
+                                  ? FontWeight.bold
+                                  : FontWeight.w500,
+                              color: isSelected
+                                  ? const Color(0xFFFFA500)
+                                  : AppColors.grey700,
+                              fontSize: isTablet ? 16 : 14,
+                            ),
+                          ),
+                        ),
+                        Icon(
+                          _getExperienceIcon(level),
+                          color: isSelected
+                              ? const Color(0xFFFFA500)
+                              : AppColors.grey400,
+                          size: isTablet ? 24 : 20,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBioStep(bool isTablet) {
+    return SingleChildScrollView(
+      padding: EdgeInsets.all(isTablet ? 24 : 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Container(
+            padding: EdgeInsets.all(isTablet ? 20 : 16),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  const Color(0xFFFFD700).withOpacity(0.1),
+                  const Color(0xFFFFA500).withOpacity(0.05),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: const Color(0xFFFFD700).withOpacity(0.3),
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFD700).withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    Icons.edit_note,
+                    color: const Color(0xFFFFA500),
+                    size: isTablet ? 32 : 24,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Tell Your Story',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          fontSize: isTablet ? 20 : 18,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Share your plant journey and expertise',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: AppColors.grey600,
+                          fontSize: isTablet ? 14 : 13,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+          // Bio text field
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppColors.grey200),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 8,
+                  spreadRadius: 0,
+                ),
+              ],
+            ),
+            child: TextField(
+              controller: _bioController,
+              maxLines: 8,
+              maxLength: 500,
+              decoration: InputDecoration(
+                hintText:
+                    'Tell us about your plant journey, areas of expertise, and what makes you passionate about plants...',
+                hintStyle: TextStyle(
+                  color: AppColors.grey500,
+                  fontSize: isTablet ? 14 : 13,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding: EdgeInsets.all(isTablet ? 20 : 16),
+                counterStyle: TextStyle(
+                  color: AppColors.grey500,
+                  fontSize: isTablet ? 12 : 11,
+                ),
+              ),
+              style: TextStyle(
+                fontSize: isTablet ? 16 : 14,
+                height: 1.5,
+              ),
+              onChanged: (value) {
+                setState(() {
+                  _bio = value;
+                });
+              },
+            ),
+          ),
+          const SizedBox(height: 24),
+          // Credentials section
+          Text(
+            'Credentials (Optional)',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+              fontSize: isTablet ? 18 : 16,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Add any certifications, degrees, or professional credentials',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: AppColors.grey600,
+              fontSize: isTablet ? 14 : 12,
+            ),
+          ),
+          const SizedBox(height: 16),
+          // Add credential field
+          Row(
+            children: [
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: AppColors.grey200),
+                  ),
+                  child: TextField(
+                    controller: _credentialController,
+                    decoration: InputDecoration(
+                      hintText: 'e.g., Certified Horticulturist',
+                      hintStyle: TextStyle(
+                        color: AppColors.grey500,
+                        fontSize: isTablet ? 14 : 13,
+                      ),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: isTablet ? 16 : 12,
+                        vertical: isTablet ? 16 : 12,
+                      ),
+                    ),
+                    style: TextStyle(
+                      fontSize: isTablet ? 16 : 14,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      const Color(0xFFFFD700),
+                      const Color(0xFFFFA500),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: ElevatedButton(
+                  onPressed: () {
+                    if (_credentialController.text.trim().isNotEmpty) {
+                      setState(() {
+                        _credentials.add(_credentialController.text.trim());
+                        _credentialController.clear();
+                      });
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isTablet ? 20 : 16,
+                      vertical: isTablet ? 16 : 12,
+                    ),
+                  ),
+                  child: Icon(
+                    Icons.add,
+                    color: Colors.white,
+                    size: isTablet ? 24 : 20,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          // Display added credentials
+          if (_credentials.isNotEmpty)
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: _credentials.map((credential) {
+                return Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isTablet ? 12 : 10,
+                    vertical: isTablet ? 8 : 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFD700).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: const Color(0xFFFFD700).withOpacity(0.3),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.verified,
+                        color: const Color(0xFFFFA500),
+                        size: isTablet ? 16 : 14,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        credential,
+                        style: TextStyle(
+                          color: const Color(0xFFFFA500),
+                          fontSize: isTablet ? 12 : 11,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _credentials.remove(credential);
+                          });
+                        },
+                        child: Icon(
+                          Icons.close,
+                          color: const Color(0xFFFFA500),
+                          size: isTablet ? 16 : 14,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReviewStep(bool isTablet) {
+    return SingleChildScrollView(
+      padding: EdgeInsets.all(isTablet ? 24 : 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Container(
+            padding: EdgeInsets.all(isTablet ? 20 : 16),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  const Color(0xFFFFD700).withOpacity(0.1),
+                  const Color(0xFFFFA500).withOpacity(0.05),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: const Color(0xFFFFD700).withOpacity(0.3),
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFD700).withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(
+                    Icons.preview,
+                    color: const Color(0xFFFFA500),
+                    size: isTablet ? 32 : 24,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Review Application',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          fontSize: isTablet ? 20 : 18,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Please review your information before submitting',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: AppColors.grey600,
+                          fontSize: isTablet ? 14 : 13,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+          // Review cards
+          _buildReviewCard(
+            'Specialty',
+            _selectedSpecialty,
+            Icons.psychology,
+            isTablet,
+            () => _pageController.animateToPage(
+              0,
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+            ),
+          ),
+          const SizedBox(height: 12),
+          _buildReviewCard(
+            'Experience',
+            _experience,
+            Icons.timeline,
+            isTablet,
+            () => _pageController.animateToPage(
+              1,
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+            ),
+          ),
+          const SizedBox(height: 12),
+          _buildReviewCard(
+            'Bio',
+            _bioController.text.length > 100
+                ? '${_bioController.text.substring(0, 100)}...'
+                : _bioController.text,
+            Icons.edit_note,
+            isTablet,
+            () => _pageController.animateToPage(
+              2,
+              duration: const Duration(milliseconds: 300),
+              curve: Curves.easeInOut,
+            ),
+          ),
+          if (_credentials.isNotEmpty) ..._buildCredentialsSection(isTablet),
+          const SizedBox(height: 24),
+          // Benefits preview
+          Container(
+            padding: EdgeInsets.all(isTablet ? 20 : 16),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  const Color(0xFFFFD700).withOpacity(0.1),
+                  const Color(0xFFFFA500).withOpacity(0.05),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: const Color(0xFFFFD700).withOpacity(0.3),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.stars,
+                      color: const Color(0xFFFFA500),
+                      size: isTablet ? 24 : 20,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Expert Benefits',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        fontSize: isTablet ? 18 : 16,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                ..._buildBenefitsList(isTablet),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReviewCard(
+    String title,
+    String content,
+    IconData icon,
+    bool isTablet,
+    VoidCallback onEdit,
+  ) {
+    return Container(
+      padding: EdgeInsets.all(isTablet ? 16 : 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppColors.grey200),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 4,
+            spreadRadius: 0,
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(
+                icon,
+                color: const Color(0xFFFFA500),
+                size: isTablet ? 20 : 18,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                title,
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  fontSize: isTablet ? 16 : 14,
+                ),
+              ),
+              const Spacer(),
+              GestureDetector(
+                onTap: onEdit,
+                child: Icon(
+                  Icons.edit,
+                  color: AppColors.grey500,
+                  size: isTablet ? 20 : 18,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            content,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: AppColors.grey700,
+              fontSize: isTablet ? 14 : 13,
+              height: 1.4,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  List<Widget> _buildBenefitsList(bool isTablet) {
+    final benefits = [
+      'Verified Expert Badge',
+      'Priority in community answers',
+      'Access to expert-only features',
+      'Earn from helping others',
+      'Build your professional reputation',
+    ];
+
+    return benefits
+        .map(
+          (benefit) => Padding(
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.check_circle,
+                  color: const Color(0xFFFFA500),
+                  size: isTablet ? 16 : 14,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    benefit,
+                    style: TextStyle(
+                      color: AppColors.grey700,
+                      fontSize: isTablet ? 14 : 13,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        )
+        .toList();
+  }
+
+  IconData _getSpecialtyIcon(String specialty) {
+    switch (specialty) {
+      case 'Indoor Plant Care':
+        return Icons.home;
+      case 'Outdoor Gardening':
+        return Icons.yard;
+      case 'Succulent & Cacti':
+        return Icons.spa;
+      case 'Plant Disease & Pests':
+        return Icons.bug_report;
+      case 'Plant Propagation':
+        return Icons.content_copy;
+      case 'Hydroponics':
+        return Icons.water;
+      case 'Organic Gardening':
+        return Icons.eco;
+      case 'Tropical Plants':
+        return Icons.wb_sunny;
+      case 'Herbs & Vegetables':
+        return Icons.restaurant;
+      case 'Landscaping Design':
+        return Icons.landscape;
+      default:
+        return Icons.eco;
+    }
+  }
+
+  IconData _getExperienceIcon(String experience) {
+    switch (experience) {
+      case '1-2 years':
+        return Icons.local_florist;
+      case '3-5 years':
+        return Icons.local_florist;
+      case '5-10 years':
+        return Icons.park;
+      case '10+ years':
+        return Icons.forest;
+      case 'Professional/Certified':
+        return Icons.verified;
+      default:
+        return Icons.eco;
+    }
+  }
+
+  List<Widget> _buildCredentialsSection(bool isTablet) {
+    return [
+      const SizedBox(height: 12),
+      Container(
+        padding: EdgeInsets.all(isTablet ? 16 : 12),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppColors.grey200),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 4,
+              spreadRadius: 0,
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.verified,
+                  color: const Color(0xFFFFA500),
+                  size: isTablet ? 20 : 18,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Credentials',
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    fontSize: isTablet ? 16 : 14,
+                  ),
+                ),
+                const Spacer(),
+                GestureDetector(
+                  onTap: () => _pageController.animateToPage(
+                    2,
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeInOut,
+                  ),
+                  child: Icon(
+                    Icons.edit,
+                    color: AppColors.grey500,
+                    size: isTablet ? 20 : 18,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: _credentials.map((credential) {
+                return Container(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: isTablet ? 8 : 6,
+                    vertical: isTablet ? 4 : 3,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFD700).withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: const Color(0xFFFFD700).withOpacity(0.3),
+                    ),
+                  ),
+                  child: Text(
+                    credential,
+                    style: TextStyle(
+                      color: const Color(0xFFFFA500),
+                      fontSize: isTablet ? 11 : 10,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ],
+        ),
+      ),
+    ];
+  }
+
+  void _submitApplication() {
+    // TODO: Implement actual submission logic
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppColors.success,
+                    AppColors.success.withOpacity(0.8),
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.check_circle_outline,
+                color: Colors.white,
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 12),
+            const Expanded(
+              child: Text(
+                'Application Submitted!',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: const Text(
+          'Thank you for applying to become an expert! We\'ll review your application and get back to you within 3-5 business days.',
+          style: TextStyle(
+            height: 1.4,
+            fontSize: 14,
+          ),
+        ),
+        actions: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(),
+                child: Text(
+                  'Close',
+                  style: TextStyle(
+                    color: AppColors.grey600,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      AppColors.primary,
+                      AppColors.primary.withOpacity(0.8),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(context).pop(); // Close dialog
+                    Navigator.of(context).pop(); // Close wizard
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
+                    elevation: 0,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 12,
+                    ),
+                  ),
+                  child: const Text(
+                    'Got it!',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
