@@ -21,46 +21,7 @@ class Group with _$Group {
     @Default([]) List<String> tags,
   }) = _Group;
 
-  factory Group.fromJson(Map<String, dynamic> json) {
-    // Handle Firestore Timestamp conversion
-    DateTime createdAt;
-    if (json['createdAt'] is Timestamp) {
-      createdAt = (json['createdAt'] as Timestamp).toDate();
-    } else if (json['createdAt'] is String) {
-      createdAt = DateTime.parse(json['createdAt']);
-    } else {
-      createdAt = DateTime.now();
-    }
-
-    // Handle GroupCategory enum
-    GroupCategory category;
-    if (json['category'] is String) {
-      try {
-        category = GroupCategory.values.firstWhere(
-          (e) => e.name == json['category'],
-          orElse: () => GroupCategory.general,
-        );
-      } catch (e) {
-        category = GroupCategory.general;
-      }
-    } else {
-      category = GroupCategory.general;
-    }
-
-    return Group(
-      id: json['id'] ?? '',
-      name: json['name'] ?? '',
-      description: json['description'] ?? '',
-      adminId: json['adminId'] ?? '',
-      adminName: json['adminName'] ?? '',
-      memberIds: List<String>.from(json['memberIds'] ?? []),
-      createdAt: createdAt,
-      category: category,
-      imageUrl: json['imageUrl'],
-      isPublic: json['isPublic'] ?? true,
-      tags: List<String>.from(json['tags'] ?? []),
-    );
-  }
+  factory Group.fromJson(Map<String, dynamic> json) => _$GroupFromJson(json);
 }
 
 enum GroupCategory {
