@@ -40,6 +40,28 @@ class AppColors {
   static const Color grey700 = Color(0xFF616161);
   static const Color grey800 = Color(0xFF424242);
   static const Color grey900 = Color(0xFF212121);
+  
+  // Dark mode specific colors
+  static const Color darkBackground = Color(0xFF121212);
+  static const Color darkSurface = Color(0xFF1E1E1E);
+  static const Color darkSurfaceVariant = Color(0xFF2D2D2D);
+  static const Color darkOnBackground = Color(0xFFE1E1E1);
+  static const Color darkOnSurface = Color(0xFFE1E1E1);
+  
+  // Helper method to get theme-aware colors
+  static Color getBackgroundColor(BuildContext context) {
+    return Theme.of(context).colorScheme.surface;
+  }
+  
+  static Color getTextColor(BuildContext context) {
+    return Theme.of(context).colorScheme.onSurface;
+  }
+  
+  static Color getSecondaryTextColor(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark 
+        ? grey400 
+        : grey600;
+  }
 }
 
 class AppTheme {

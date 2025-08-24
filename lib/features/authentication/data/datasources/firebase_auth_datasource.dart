@@ -133,8 +133,24 @@ class FirebaseAuthDataSource implements AuthDataSource {
   @override
   Future<void> sendPasswordResetEmail({required String email}) async {
     try {
+      // First check if user exists by trying to fetch sign-in methods
+      final signInMethods = await _firebaseAuth.fetchSignInMethodsForEmail(email);
+      
+      if (signInMethods.isEmpty) {
+        // User doesn't exist - throw custom error
+        throw Exception('No account found with this email address. Please check your email or sign up for a new account.');
+      }
+      
+      // User exists, send password reset email
       await _firebaseAuth.sendPasswordResetEmail(email: email);
+      
+      print('Password reset email sent to: $email');
+      print('User sign-in methods: $signInMethods');
+      
     } on firebase_auth.FirebaseAuthException catch (e) {
+      if (e.code == 'user-not-found') {
+        throw Exception('No account found with this email address. Please check your email or sign up for a new account.');
+      }
       throw _handleAuthException(e);
     }
   }

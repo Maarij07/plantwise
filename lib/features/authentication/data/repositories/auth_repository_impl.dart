@@ -14,10 +14,12 @@ class AuthRepositoryImpl implements AuthRepository {
     required String email,
     required String password,
   }) async {
+    print('AuthRepositoryImpl: Starting sign-in for $email');
     final userModel = await _authDataSource.signInWithEmailAndPassword(
       email: email,
       password: password,
     );
+    print('AuthRepositoryImpl: Received user model: ${userModel?.toEntity().name}');
     return userModel?.toEntity();
   }
 

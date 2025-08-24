@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_constants.dart';
+import '../../../../core/services/permission_service.dart';
 import '../providers/auth_providers.dart';
 import '../providers/auth_state.dart';
 import '../widgets/custom_input_field.dart';
@@ -47,8 +48,13 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
     return null;
   }
 
-  void _signIn() {
+  void _signIn() async {
     if (_formKey.currentState!.validate()) {
+      // Request media permissions before login
+      final permissionsGranted = await PermissionService.requestMediaPermissions(context);
+      
+      if (!mounted) return;
+      
       final email = _emailController.text.trim();
       final password = _passwordController.text;
       
@@ -58,10 +64,22 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
         return;
       }
       
+      // Show informational message if permissions were denied
+      if (!permissionsGranted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Camera permissions can be enabled later in Settings for plant identification'),
+            backgroundColor: Theme.of(context).colorScheme.tertiary,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+      
       // Use Firebase authentication for regular users
       ref.read(authNotifierProvider.notifier).signInWithEmailAndPassword(
         email: email,
         password: password,
+        rememberMe: _rememberMe,
       );
     }
   }
@@ -73,15 +91,25 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
 
     // Listen to auth state changes
     ref.listen<AuthState>(authStateProvider, (previous, next) {
+      print('SignInScreen: Auth state changed from ${previous?.runtimeType} to ${next.runtimeType}');
       next.when(
-        initial: () {},
-        loading: () {},
+        initial: () {
+          print('SignInScreen: Auth state is initial');
+        },
+        loading: () {
+          print('SignInScreen: Auth state is loading');
+        },
         authenticated: (user) {
+          print('SignInScreen: Auth state is authenticated for user: ${user.name}');
+          print('SignInScreen: Navigating to home route: ${AppConstants.homeRoute}');
           // Navigate to home screen on successful authentication
           context.go(AppConstants.homeRoute);
         },
-        unauthenticated: () {},
+        unauthenticated: () {
+          print('SignInScreen: Auth state is unauthenticated');
+        },
         error: (message) {
+          print('SignInScreen: Auth state is error: $message');
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(message),
@@ -95,6 +123,7 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
           });
         },
         passwordResetSent: () {
+          print('SignInScreen: Auth state is password reset sent');
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Password reset email sent'),

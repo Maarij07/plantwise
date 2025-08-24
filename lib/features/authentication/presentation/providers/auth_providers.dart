@@ -63,20 +63,30 @@ class AuthNotifier extends StateNotifier<AuthState> {
   void _init() {
     _authRepository.authStateChanges.listen(
       (user) async {
-        print('Auth state changed: ${user?.email ?? 'null'}');
+        print('Auth state stream listener: User changed to ${user?.email ?? 'null'}');
         if (user != null) {
+          print('Auth state stream: User is authenticated, processing...');
+          // Get current Remember Me preference
+          final rememberMe = await AuthStorageService.instance.isRememberMeEnabled();
+          print('Auth state stream: Remember me preference: $rememberMe');
+          
           // Sync with AuthStorageService when user is authenticated
           await AuthStorageService.instance.saveLoginState(
             isLoggedIn: true,
+            rememberMe: rememberMe,
             userId: user.id,
             email: user.email,
             name: user.name,
           );
+          print('Auth state stream: Saved login state, setting auth state to authenticated');
           state = AuthState.authenticated(user);
+          print('Auth state stream: Auth state set to authenticated for ${user.name}');
         } else {
+          print('Auth state stream: User is null, clearing login state');
           // Clear AuthStorageService when user is unauthenticated
           await AuthStorageService.instance.clearLoginState();
           state = const AuthState.unauthenticated();
+          print('Auth state stream: Auth state set to unauthenticated');
         }
       },
       onError: (error) {
@@ -89,15 +99,26 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> signInWithEmailAndPassword({
     required String email,
     required String password,
+    bool rememberMe = false,
   }) async {
+    print('AuthNotifier: Starting sign-in process for $email');
+    print('AuthNotifier: Remember me: $rememberMe');
     state = const AuthState.loading();
     try {
+      // Save Remember Me preference before authentication
+      print('AuthNotifier: Saving remember me preference: $rememberMe');
+      await AuthStorageService.instance.setRememberMe(rememberMe);
+      
+      print('AuthNotifier: Calling repository sign-in method');
       await _authRepository.signInWithEmailAndPassword(
         email: email,
         password: password,
       );
+      
+      print('AuthNotifier: Repository sign-in completed successfully');
       // Don't set state manually - let the authStateChanges stream handle it
     } catch (e) {
+      print('AuthNotifier: Sign-in error: $e');
       state = AuthState.error(e.toString());
     }
   }

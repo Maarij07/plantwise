@@ -13,6 +13,229 @@ import 'comments_screen.dart';
 import 'create_post_screen.dart';
 import '../widgets/group_management_dialogs.dart';
 
+// Animated wrapper widgets
+class _AnimatedPostCard extends StatefulWidget {
+  final CommunityPost post;
+  final Duration animationDelay;
+
+  const _AnimatedPostCard({
+    required this.post,
+    required this.animationDelay,
+  });
+
+  @override
+  State<_AnimatedPostCard> createState() => _AnimatedPostCardState();
+}
+
+class _AnimatedPostCardState extends State<_AnimatedPostCard>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<Offset> _slideAnimation;
+  late Animation<double> _fadeAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 600),
+      vsync: this,
+    );
+
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.3),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeOutCubic,
+    ));
+
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeOut,
+    ));
+
+    // Start animation after the specified delay
+    Future.delayed(widget.animationDelay, () {
+      if (mounted) {
+        _animationController.forward();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _animationController,
+      builder: (context, child) {
+        return SlideTransition(
+          position: _slideAnimation,
+          child: FadeTransition(
+            opacity: _fadeAnimation,
+            child: _PostCard(post: widget.post),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _AnimatedGroupCard extends StatefulWidget {
+  final Group group;
+  final Duration animationDelay;
+
+  const _AnimatedGroupCard({
+    required this.group,
+    required this.animationDelay,
+  });
+
+  @override
+  State<_AnimatedGroupCard> createState() => _AnimatedGroupCardState();
+}
+
+class _AnimatedGroupCardState extends State<_AnimatedGroupCard>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<Offset> _slideAnimation;
+  late Animation<double> _fadeAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 600),
+      vsync: this,
+    );
+
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.3),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeOutCubic,
+    ));
+
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeOut,
+    ));
+
+    // Start animation after the specified delay
+    Future.delayed(widget.animationDelay, () {
+      if (mounted) {
+        _animationController.forward();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _animationController,
+      builder: (context, child) {
+        return SlideTransition(
+          position: _slideAnimation,
+          child: FadeTransition(
+            opacity: _fadeAnimation,
+            child: _RealGroupCard(group: widget.group),
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _AnimatedExpertCard extends StatefulWidget {
+  final PlantExpert expert;
+  final Duration animationDelay;
+
+  const _AnimatedExpertCard({
+    required this.expert,
+    required this.animationDelay,
+  });
+
+  @override
+  State<_AnimatedExpertCard> createState() => _AnimatedExpertCardState();
+}
+
+class _AnimatedExpertCardState extends State<_AnimatedExpertCard>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<Offset> _slideAnimation;
+  late Animation<double> _fadeAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 600),
+      vsync: this,
+    );
+
+    _slideAnimation = Tween<Offset>(
+      begin: const Offset(0, 0.3),
+      end: Offset.zero,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeOutCubic,
+    ));
+
+    _fadeAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _animationController,
+      curve: Curves.easeOut,
+    ));
+
+    // Start animation after the specified delay
+    Future.delayed(widget.animationDelay, () {
+      if (mounted) {
+        _animationController.forward();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _animationController,
+      builder: (context, child) {
+        return SlideTransition(
+          position: _slideAnimation,
+          child: FadeTransition(
+            opacity: _fadeAnimation,
+            child: _ExpertCard(expert: widget.expert),
+          ),
+        );
+      },
+    );
+  }
+}
+
 class CommunityScreen extends ConsumerStatefulWidget {
   const CommunityScreen({super.key});
 
@@ -45,6 +268,7 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
         title: const Text('Community'),
         automaticallyImplyLeading: false,
@@ -60,9 +284,9 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen>
         ],
         bottom: TabBar(
           controller: _tabController,
-          labelColor: AppColors.primary,
-          unselectedLabelColor: AppColors.grey600,
-          indicatorColor: AppColors.primary,
+          labelColor: Theme.of(context).colorScheme.primary,
+          unselectedLabelColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+          indicatorColor: Theme.of(context).colorScheme.primary,
           tabs: const [
             Tab(text: 'Feed'),
             Tab(text: 'Groups'),
@@ -187,7 +411,10 @@ class _FeedTab extends ConsumerWidget {
           child: ListView.builder(
             padding: const EdgeInsets.all(AppConstants.paddingMedium),
             itemCount: posts.length,
-            itemBuilder: (context, index) => _PostCard(post: posts[index]),
+            itemBuilder: (context, index) => _AnimatedPostCard(
+              post: posts[index],
+              animationDelay: Duration(milliseconds: index * 150),
+            ),
           ),
         );
       },
@@ -318,7 +545,10 @@ class _GroupsTab extends ConsumerWidget {
           child: ListView.builder(
             padding: const EdgeInsets.all(AppConstants.paddingMedium),
             itemCount: groups.length,
-            itemBuilder: (context, index) => _RealGroupCard(group: groups[index]),
+            itemBuilder: (context, index) => _AnimatedGroupCard(
+              group: groups[index],
+              animationDelay: Duration(milliseconds: index * 150),
+            ),
           ),
         );
       },
@@ -392,7 +622,10 @@ class _ExpertsTab extends StatelessWidget {
     return ListView.builder(
       padding: const EdgeInsets.all(AppConstants.paddingMedium),
       itemCount: _sampleExperts.length,
-      itemBuilder: (context, index) => _ExpertCard(expert: _sampleExperts[index]),
+      itemBuilder: (context, index) => _AnimatedExpertCard(
+        expert: _sampleExperts[index],
+        animationDelay: Duration(milliseconds: index * 150),
+      ),
     );
   }
 }

@@ -6,27 +6,38 @@ class AuthStorageService {
   static const String _userEmailKey = 'user_email';
   static const String _userNameKey = 'user_name';
   static const String _isFirstLaunchKey = 'is_first_launch';
+  static const String _rememberMeKey = 'remember_me';
 
   static AuthStorageService? _instance;
   static AuthStorageService get instance => _instance ??= AuthStorageService._();
   
   AuthStorageService._();
 
-  // Save login state
+  // Save login state with Remember Me support
   Future<void> saveLoginState({
     required bool isLoggedIn,
+    bool rememberMe = true, // Default to true for backward compatibility
     String? userId,
     String? email,
     String? name,
   }) async {
     final prefs = await SharedPreferences.getInstance();
     
-    await prefs.setBool(_isLoggedInKey, isLoggedIn);
-    
-    if (isLoggedIn) {
-      if (userId != null) await prefs.setString(_userIdKey, userId);
-      if (email != null) await prefs.setString(_userEmailKey, email);
-      if (name != null) await prefs.setString(_userNameKey, name);
+    // Only save persistent login state if rememberMe is true
+    if (rememberMe) {
+      await prefs.setBool(_isLoggedInKey, isLoggedIn);
+      await prefs.setBool(_rememberMeKey, true);
+      
+      if (isLoggedIn) {
+        if (userId != null) await prefs.setString(_userIdKey, userId);
+        if (email != null) await prefs.setString(_userEmailKey, email);
+        if (name != null) await prefs.setString(_userNameKey, name);
+      }
+    } else {
+      // If Remember Me is false, clear any existing persistent state
+      // but don't store new login state for persistence
+      await prefs.setBool(_rememberMeKey, false);
+      await clearLoginState();
     }
   }
 
@@ -85,6 +96,24 @@ class AuthStorageService {
   Future<String?> getUserName() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString(_userNameKey);
+  }
+
+  // Remember Me specific methods
+  Future<bool> isRememberMeEnabled() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getBool(_rememberMeKey) ?? false;
+  }
+
+  Future<void> setRememberMe(bool rememberMe) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_rememberMeKey, rememberMe);
+  }
+
+  // Enhanced login check that considers Remember Me preference
+  Future<bool> shouldPersistLogin() async {
+    final isLoggedIn = await this.isLoggedIn();
+    final rememberMe = await isRememberMeEnabled();
+    return isLoggedIn && rememberMe;
   }
 
   // Clear all stored data (for complete reset)

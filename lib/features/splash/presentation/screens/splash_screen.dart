@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/constants/app_constants.dart';
+import '../../../../core/services/permission_service.dart';
 import '../../../authentication/data/services/auth_storage_service.dart';
 
 class SplashScreen extends StatefulWidget {
@@ -55,14 +56,19 @@ class _SplashScreenState extends State<SplashScreen>
     
     if (!mounted) return;
     
+    // Request notification permissions first (non-blocking)
+    await _requestNotificationPermissions();
+    
+    if (!mounted) return;
+    
     try {
       final authStorage = AuthStorageService.instance;
       
-      // Check if user is logged in
-      final isLoggedIn = await authStorage.isLoggedIn();
+      // Check if user should persist login (logged in AND Remember Me enabled)
+      final shouldPersist = await authStorage.shouldPersistLogin();
       
-      if (isLoggedIn) {
-        // User is logged in, navigate to home/dashboard
+      if (shouldPersist) {
+        // User is logged in with Remember Me enabled, navigate to home/dashboard
         context.go(AppConstants.homeRoute);
       } else {
         // Check if it's first launch to show onboarding
@@ -82,6 +88,16 @@ class _SplashScreenState extends State<SplashScreen>
       if (mounted) {
         context.go(AppConstants.onboardingRoute);
       }
+    }
+  }
+  
+  Future<void> _requestNotificationPermissions() async {
+    try {
+      // Request notification permissions
+      await PermissionService.requestNotificationPermission(context);
+    } catch (e) {
+      debugPrint('Error requesting notification permissions: $e');
+      // Continue even if permission request fails
     }
   }
 

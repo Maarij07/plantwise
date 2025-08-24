@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../core/constants/app_constants.dart';
+import '../../../../core/services/permission_service.dart';
 import '../providers/auth_providers.dart';
 import '../providers/auth_state.dart';
 import '../widgets/custom_input_field.dart';
@@ -74,8 +75,24 @@ class _SignUpScreenState extends ConsumerState<SignUpScreen> {
     return null;
   }
 
-  void _signUp() {
+  void _signUp() async {
     if (_formKey.currentState!.validate() && _acceptTerms) {
+      // Request media permissions before registration
+      final permissionsGranted = await PermissionService.requestMediaPermissions(context);
+      
+      if (!mounted) return;
+      
+      // Show informational message if permissions were denied
+      if (!permissionsGranted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Camera permissions can be enabled later in Settings for plant identification'),
+            backgroundColor: Theme.of(context).colorScheme.tertiary,
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      }
+      
       ref.read(authNotifierProvider.notifier).signUpWithEmailAndPassword(
             name: _nameController.text.trim(),
             email: _emailController.text.trim(),

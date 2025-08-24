@@ -1,25 +1,32 @@
 import 'package:flutter/material.dart';
-import 'package:freezed_annotation/freezed_annotation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-part 'group.freezed.dart';
-part 'group.g.dart';
+class Group {
+  const Group({
+    required this.id,
+    required this.name,
+    required this.description,
+    required this.adminId,
+    required this.adminName,
+    required this.memberIds,
+    required this.createdAt,
+    required this.category,
+    this.imageUrl,
+    this.isPublic = true,
+    this.tags = const [],
+  });
 
-@freezed
-class Group with _$Group {
-  const factory Group({
-    required String id,
-    required String name,
-    required String description,
-    required String adminId,
-    required String adminName,
-    required List<String> memberIds,
-    required DateTime createdAt,
-    required GroupCategory category,
-    String? imageUrl,
-    @Default(true) bool isPublic,
-    @Default([]) List<String> tags,
-  }) = _Group;
+  final String id;
+  final String name;
+  final String description;
+  final String adminId;
+  final String adminName;
+  final List<String> memberIds;
+  final DateTime createdAt;
+  final GroupCategory category;
+  final String? imageUrl;
+  final bool isPublic;
+  final List<String> tags;
 
   factory Group.fromJson(Map<String, dynamic> json) {
     // Handle Firestore Timestamp conversion
@@ -60,6 +67,22 @@ class Group with _$Group {
       isPublic: json['isPublic'] ?? true,
       tags: List<String>.from(json['tags'] ?? []),
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'description': description,
+      'adminId': adminId,
+      'adminName': adminName,
+      'memberIds': memberIds,
+      'createdAt': createdAt.toIso8601String(),
+      'category': category.name,
+      'imageUrl': imageUrl,
+      'isPublic': isPublic,
+      'tags': tags,
+    };
   }
 }
 

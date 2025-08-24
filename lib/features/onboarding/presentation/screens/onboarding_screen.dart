@@ -52,8 +52,9 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: theme.colorScheme.surface,
       body: SafeArea(
         child: Column(
           children: [
@@ -67,8 +68,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     onPressed: _skipOnboarding,
                     child: Text(
                       'Skip',
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        color: AppColors.grey600,
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        color: theme.colorScheme.onSurface.withOpacity(0.6),
                       ),
                     ),
                   ),
@@ -110,8 +111,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         height: 8,
                         decoration: BoxDecoration(
                           color: _currentPage == index
-                              ? AppColors.primary
-                              : AppColors.grey300,
+                              ? theme.colorScheme.primary
+                              : theme.colorScheme.onSurface.withOpacity(0.3),
                           borderRadius: BorderRadius.circular(4),
                         ),
                       ),
@@ -176,6 +177,7 @@ class _OnboardingPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.all(AppConstants.paddingLarge),
       child: Column(
@@ -204,9 +206,9 @@ class _OnboardingPage extends StatelessWidget {
           // Title
           Text(
             title,
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+            style: theme.textTheme.headlineMedium?.copyWith(
               fontWeight: FontWeight.bold,
-              color: AppColors.onBackground,
+              color: theme.colorScheme.onSurface,
             ),
             textAlign: TextAlign.center,
           ),
@@ -216,8 +218,8 @@ class _OnboardingPage extends StatelessWidget {
           // Description
           Text(
             description,
-            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-              color: AppColors.grey700,
+            style: theme.textTheme.bodyLarge?.copyWith(
+              color: theme.colorScheme.onSurface.withOpacity(0.7),
               height: 1.6,
             ),
             textAlign: TextAlign.center,

@@ -70,7 +70,7 @@ class _MyPlantsScreenState extends ConsumerState<MyPlantsScreen>
     final isLargeScreen = screenWidth > 1024;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: _buildEnhancedAppBar(context, isTablet),
       body: FadeTransition(
         opacity: _fadeAnimation,
@@ -1332,7 +1332,7 @@ class _EnhancedPlantCard extends StatelessWidget {
         ],
       ),
       child: Material(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(20),
         child: InkWell(
           borderRadius: BorderRadius.circular(20),
@@ -1452,7 +1452,7 @@ class _EnhancedPlantCard extends StatelessWidget {
                           vertical: isTablet ? 6 : 4,
                         ),
                         decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.9),
+                          color: Theme.of(context).colorScheme.surface.withOpacity(0.9),
                           borderRadius: BorderRadius.circular(8),
                           boxShadow: [
                             BoxShadow(
@@ -1633,7 +1633,7 @@ class _EnhancedPlantListItem extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(

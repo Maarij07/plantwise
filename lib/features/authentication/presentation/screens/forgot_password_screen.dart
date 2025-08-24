@@ -70,18 +70,41 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
         passwordResetSent: () {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: const Text('Password reset email sent! Check your inbox.'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Password reset email sent!',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Check your inbox at ${_emailController.text.trim()}',
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                  const SizedBox(height: 2),
+                  const Text(
+                    'Don\'t forget to check your spam folder.',
+                    style: TextStyle(fontSize: 12),
+                  ),
+                ],
+              ),
               backgroundColor: Colors.green,
               behavior: SnackBarBehavior.floating,
+              duration: const Duration(seconds: 5),
               action: SnackBarAction(
                 label: 'OK',
                 textColor: Colors.white,
-                onPressed: () => context.pop(),
+                onPressed: () {
+                  ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                  context.pop();
+                },
               ),
             ),
           );
-          // Navigate back after success
-          Future.delayed(const Duration(seconds: 2), () {
+          // Navigate back after longer delay to let user read the message
+          Future.delayed(const Duration(seconds: 6), () {
             if (mounted) {
               context.pop();
             }
@@ -198,6 +221,61 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                             color: theme.colorScheme.onSurface.withOpacity(0.7),
                             height: 1.4,
                           ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                
+                const SizedBox(height: AppConstants.paddingLarge),
+                
+                // Debug Info Container
+                Container(
+                  padding: const EdgeInsets.all(AppConstants.paddingMedium),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(AppConstants.borderRadius),
+                    border: Border.all(
+                      color: Colors.amber.withOpacity(0.3),
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.bug_report_outlined,
+                            size: 16,
+                            color: Colors.amber.shade700,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Email Delivery Troubleshooting',
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              color: Colors.amber.shade700,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        '• If no email arrives for valid accounts, check Firebase Console > Authentication > Templates',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: Colors.amber.shade800,
+                        ),
+                      ),
+                      Text(
+                        '• Try with a Gmail address for better deliverability',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: Colors.amber.shade800,
+                        ),
+                      ),
+                      Text(
+                        '• Invalid emails will now show a proper error message',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: Colors.amber.shade800,
                         ),
                       ),
                     ],

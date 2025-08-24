@@ -36,10 +36,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         return null;
       }
       
-      // For protected routes, check if user is logged in
-      final isLoggedIn = await AuthStorageService.instance.isLoggedIn();
-      if (!isLoggedIn) {
-        // If not logged in, check if they've seen onboarding
+      // For protected routes, check if user should persist login
+      final shouldPersist = await AuthStorageService.instance.shouldPersistLogin();
+      if (!shouldPersist) {
+        // If not logged in or Remember Me disabled, check if they've seen onboarding
         final isFirstLaunch = await AuthStorageService.instance.isFirstLaunch();
         return isFirstLaunch ? AppConstants.onboardingRoute : AppConstants.signInRoute;
       }

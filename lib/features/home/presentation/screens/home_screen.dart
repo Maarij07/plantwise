@@ -1,21 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../config/theme/app_theme.dart';
 import '../../../../core/constants/app_constants.dart';
+import '../../../../core/constants/user_constants.dart';
+import '../../../../core/utils/time_greeting_utils.dart';
 import '../../../profile/presentation/screens/profile_screen.dart';
 import '../../../plants/presentation/screens/my_plants_screen.dart';
 import '../../../community/presentation/screens/community_screen.dart';
 import '../../../notifications/presentation/screens/notifications_screen.dart';
 import '../../../profile/presentation/widgets/bitmoji_avatar.dart';
 import '../../../profile/data/services/avatar_service.dart';
+import '../widgets/weather_welcome_header.dart';
 
-class HomeScreen extends StatefulWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends ConsumerState<HomeScreen> {
   int _currentIndex = 0;
   final PageController _pageController = PageController();
 
@@ -86,16 +90,16 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 }
 
-class _DashboardTab extends StatefulWidget {
+class _DashboardTab extends ConsumerStatefulWidget {
   const _DashboardTab();
 
   @override
-  State<_DashboardTab> createState() => _DashboardTabState();
+  ConsumerState<_DashboardTab> createState() => _DashboardTabState();
 }
 
-class _DashboardTabState extends State<_DashboardTab> with TickerProviderStateMixin {
-  // Avatar seed - same as profile page
-  String _currentAvatarSeed = 'john_doe_123';
+class _DashboardTabState extends ConsumerState<_DashboardTab> with TickerProviderStateMixin {
+  // Avatar seed - using UserConstants
+  String _currentAvatarSeed = UserConstants.avatarSeed;
   
   late AnimationController _fadeController;
   late AnimationController _slideController;
@@ -134,10 +138,11 @@ class _DashboardTabState extends State<_DashboardTab> with TickerProviderStateMi
   }
 
   String _getTimeBasedGreeting() {
-    final hour = DateTime.now().hour;
-    if (hour < 12) return 'Good Morning';
-    if (hour < 17) return 'Good Afternoon';
-    return 'Good Evening';
+    return TimeGreetingUtils.getShortGreeting();
+  }
+
+  String _getMotivationalMessage() {
+    return TimeGreetingUtils.getMotivationalMessage();
   }
 
   // Build Bitmoji avatar - same as profile page
@@ -169,7 +174,7 @@ class _DashboardTabState extends State<_DashboardTab> with TickerProviderStateMi
             : AppConstants.paddingMedium;
     
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Colors.transparent,
@@ -178,7 +183,7 @@ class _DashboardTabState extends State<_DashboardTab> with TickerProviderStateMi
           AppConstants.appName,
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
             fontWeight: FontWeight.bold,
-            color: AppColors.primary,
+            color: Theme.of(context).colorScheme.primary,
             fontSize: isTablet ? 28 : 24,
           ),
         ),
@@ -238,7 +243,7 @@ class _DashboardTabState extends State<_DashboardTab> with TickerProviderStateMi
               horizontal: horizontalPadding,
               vertical: AppConstants.paddingMedium,
             ),
-            child: _buildResponsiveWelcomeHeader(context),
+            child: const WeatherWelcomeHeader(),
           ),
         ),
 
@@ -309,7 +314,7 @@ class _DashboardTabState extends State<_DashboardTab> with TickerProviderStateMi
               horizontal: horizontalPadding,
               vertical: AppConstants.paddingMedium,
             ),
-            child: _buildResponsiveWelcomeHeader(context),
+            child: const WeatherWelcomeHeader(),
           ),
         ),
 
@@ -443,7 +448,7 @@ class _DashboardTabState extends State<_DashboardTab> with TickerProviderStateMi
                             ),
                           ),
                           Text(
-                            'John Doe',
+                            UserConstants.defaultUserName,
                             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                               fontWeight: FontWeight.bold,
                               color: Colors.white,
@@ -598,7 +603,7 @@ class _DashboardTabState extends State<_DashboardTab> with TickerProviderStateMi
                             ),
                           ),
                           Text(
-                            'John Doe',
+                            UserConstants.defaultUserName,
                             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                               fontWeight: FontWeight.bold,
                               color: Colors.white,

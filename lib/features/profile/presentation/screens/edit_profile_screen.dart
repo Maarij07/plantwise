@@ -29,7 +29,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
 
   void _loadUserData() {
     // TODO: Load from user provider/repository
-    _nameController.text = 'John Doe';
+    _nameController.text = 'Shahzaib';
     _emailController.text = 'john.doe@example.com';
     _phoneController.text = '+1 234 567 8900';
     _locationController.text = 'San Francisco, CA';

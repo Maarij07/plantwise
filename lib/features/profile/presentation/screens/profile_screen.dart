@@ -7,6 +7,7 @@ import '../providers/land_size_provider.dart';
 import '../widgets/land_size_setup_dialog.dart';
 import '../widgets/bitmoji_avatar.dart';
 import '../../data/services/avatar_service.dart';
+import '../../../authentication/presentation/providers/auth_providers.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -68,18 +69,18 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
             : AppConstants.paddingMedium;
 
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
         title: Text(
           'Profile',
           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
             fontWeight: FontWeight.bold,
-            color: AppColors.primary,
+            color: Theme.of(context).colorScheme.primary,
             fontSize: isTablet ? 28 : 24,
           ),
         ),
         automaticallyImplyLeading: false,
-        backgroundColor: AppColors.background,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         elevation: 0,
       ),
       body: FadeTransition(
@@ -681,7 +682,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'John Doe',
+                    'Shahzaib',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                       fontSize: isTablet ? 24 : 20,
@@ -1089,9 +1090,37 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
             child: const Text('Cancel'),
           ),
           TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              context.go(AppConstants.signInRoute);
+            onPressed: () async {
+              Navigator.of(context).pop(); // Close dialog first
+              
+              // Show loading indicator
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (context) => const Center(
+                  child: CircularProgressIndicator(),
+                ),
+              );
+              
+              try {
+                // Call the actual sign out method
+                await ref.read(authNotifierProvider.notifier).signOut();
+                
+                if (mounted) {
+                  Navigator.of(context).pop(); // Close loading dialog
+                  context.go(AppConstants.signInRoute);
+                }
+              } catch (e) {
+                if (mounted) {
+                  Navigator.of(context).pop(); // Close loading dialog
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Error signing out: $e'),
+                      backgroundColor: Theme.of(context).colorScheme.error,
+                    ),
+                  );
+                }
+              }
             },
             child: const Text('Sign Out'),
           ),
