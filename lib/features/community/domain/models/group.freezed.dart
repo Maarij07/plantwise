@@ -14,6 +14,10 @@ T _$identity<T>(T value) => value;
 final _privateConstructorUsedError = UnsupportedError(
     'It seems like you constructed your class using `MyClass._()`. This constructor is only meant to be used by freezed and you are not supposed to need it nor use it.\nPlease check the documentation here for more information: https://github.com/rrousselGit/freezed#adding-getters-and-methods-to-our-models');
 
+Group _$GroupFromJson(Map<String, dynamic> json) {
+  return _Group.fromJson(json);
+}
+
 /// @nodoc
 mixin _$Group {
   String get id => throw _privateConstructorUsedError;
@@ -27,6 +31,9 @@ mixin _$Group {
   String? get imageUrl => throw _privateConstructorUsedError;
   bool get isPublic => throw _privateConstructorUsedError;
   List<String> get tags => throw _privateConstructorUsedError;
+
+  /// Serializes this Group to a JSON map.
+  Map<String, dynamic> toJson() => throw _privateConstructorUsedError;
 
   /// Create a copy of Group
   /// with the given fields replaced by the non-null parameter values.
@@ -225,7 +232,7 @@ class __$$GroupImplCopyWithImpl<$Res>
 }
 
 /// @nodoc
-
+@JsonSerializable()
 class _$GroupImpl implements _Group {
   const _$GroupImpl(
       {required this.id,
@@ -241,6 +248,9 @@ class _$GroupImpl implements _Group {
       final List<String> tags = const []})
       : _memberIds = memberIds,
         _tags = tags;
+
+  factory _$GroupImpl.fromJson(Map<String, dynamic> json) =>
+      _$$GroupImplFromJson(json);
 
   @override
   final String id;
@@ -308,6 +318,7 @@ class _$GroupImpl implements _Group {
             const DeepCollectionEquality().equals(other._tags, _tags));
   }
 
+  @JsonKey(includeFromJson: false, includeToJson: false)
   @override
   int get hashCode => Object.hash(
       runtimeType,
@@ -330,6 +341,13 @@ class _$GroupImpl implements _Group {
   @pragma('vm:prefer-inline')
   _$$GroupImplCopyWith<_$GroupImpl> get copyWith =>
       __$$GroupImplCopyWithImpl<_$GroupImpl>(this, _$identity);
+
+  @override
+  Map<String, dynamic> toJson() {
+    return _$$GroupImplToJson(
+      this,
+    );
+  }
 }
 
 abstract class _Group implements Group {
@@ -345,6 +363,8 @@ abstract class _Group implements Group {
       final String? imageUrl,
       final bool isPublic,
       final List<String> tags}) = _$GroupImpl;
+
+  factory _Group.fromJson(Map<String, dynamic> json) = _$GroupImpl.fromJson;
 
   @override
   String get id;
