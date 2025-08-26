@@ -20,7 +20,26 @@ class _LandSizeSetupDialogState extends ConsumerState<LandSizeSetupDialog> {
   @override
   void initState() {
     super.initState();
+    // We'll load existing land size after the first build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadExistingLandSize();
+    });
     _controller.text = _currentValue.toStringAsFixed(0);
+  }
+  
+  void _loadExistingLandSize() {
+    final currentLandSize = ref.read(landSizeProvider);
+    if (currentLandSize != null) {
+      setState(() {
+        // Load existing values
+        _currentValue = currentLandSize.value;
+        _selectedUnit = LandUnit.values.firstWhere(
+          (unit) => unit.symbol == currentLandSize.unit,
+          orElse: () => LandUnit.squareMeters,
+        );
+        _controller.text = _currentValue.toStringAsFixed(0);
+      });
+    }
   }
 
   @override
@@ -156,29 +175,34 @@ class _LandSizeSetupDialogState extends ConsumerState<LandSizeSetupDialog> {
               ),
             ),
             const SizedBox(height: 8),
-            Container(
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey[300]!),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: DropdownButtonFormField<LandUnit>(
-                value: _selectedUnit,
-                style: const TextStyle(color: Colors.black),
-                decoration: const InputDecoration(
-                  border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            DropdownButtonFormField<LandUnit>(
+              value: _selectedUnit,
+              style: const TextStyle(color: Colors.black),
+              decoration: InputDecoration(
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: Colors.grey[300]!),
                 ),
-                items: LandUnit.values.map((unit) {
-                  return DropdownMenuItem(
-                    value: unit,
-                    child: Text(
-                      unit.displayName,
-                      style: const TextStyle(color: Colors.black),
-                    ),
-                  );
-                }).toList(),
-                onChanged: _onUnitChanged,
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: Colors.grey[300]!),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: const BorderSide(color: Color(0xFF2E7D32), width: 2),
+                ),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               ),
+              items: LandUnit.values.map((unit) {
+                return DropdownMenuItem(
+                  value: unit,
+                  child: Text(
+                    unit.displayName,
+                    style: const TextStyle(color: Colors.black),
+                  ),
+                );
+              }).toList(),
+              onChanged: _onUnitChanged,
             ),
             const SizedBox(height: 20),
             

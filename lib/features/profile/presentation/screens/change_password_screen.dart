@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../config/theme/app_theme.dart';
 import '../../../../core/constants/app_constants.dart';
+import '../providers/change_password_provider.dart';
 
 class ChangePasswordScreen extends ConsumerStatefulWidget {
   const ChangePasswordScreen({super.key});
@@ -17,7 +18,6 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
   final _newPasswordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   
-  bool _isLoading = false;
   bool _obscureCurrentPassword = true;
   bool _obscureNewPassword = true;
   bool _obscureConfirmPassword = true;
@@ -33,39 +33,12 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
   Future<void> _changePassword() async {
     if (!_formKey.currentState!.validate()) return;
 
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      // TODO: Implement change password API call
-      await Future.delayed(const Duration(seconds: 2)); // Simulate API call
-      
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Password changed successfully!'),
-            backgroundColor: AppColors.success,
-          ),
-        );
-        context.pop();
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error changing password: $e'),
-            backgroundColor: AppColors.error,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
+    final changePasswordNotifier = ref.read(changePasswordProvider.notifier);
+    
+    await changePasswordNotifier.changePassword(
+      currentPassword: _currentPasswordController.text.trim(),
+      newPassword: _newPasswordController.text.trim(),
+    );
   }
 
   String? _validatePassword(String? value) {
@@ -194,11 +167,65 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final changePasswordState = ref.watch(changePasswordProvider);
+    
+    // Listen to provider state changes
+    ref.listen(changePasswordProvider, (previous, current) {
+      if (current.isSuccess) {
+        // Clear form and show success message
+        _currentPasswordController.clear();
+        _newPasswordController.clear();
+        _confirmPasswordController.clear();
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Password changed successfully!'),
+            backgroundColor: AppColors.success,
+            duration: Duration(seconds: 3),
+          ),
+        );
+        
+        // Clear the provider state and navigate back
+        Future.delayed(const Duration(milliseconds: 500), () {
+          if (mounted) {
+            ref.read(changePasswordProvider.notifier).clearState();
+            context.pop();
+          }
+        });
+      }
+      
+      if (current.errorMessage != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(current.errorMessage!),
+            backgroundColor: AppColors.error,
+            duration: const Duration(seconds: 4),
+            action: SnackBarAction(
+              label: 'Dismiss',
+              textColor: Colors.white,
+              onPressed: () {
+                ScaffoldMessenger.of(context).hideCurrentSnackBar();
+              },
+            ),
+          ),
+        );
+        
+        // Clear error after showing
+        Future.delayed(const Duration(milliseconds: 500), () {
+          if (mounted) {
+            ref.read(changePasswordProvider.notifier).clearError();
+          }
+        });
+      }
+    });
+    
+    final isLoading = changePasswordState.isLoading;
+    
     return Scaffold(
       appBar: AppBar(
         title: const Text('Change Password'),
         actions: [
-          if (_isLoading)
+          if (isLoading)
             const Center(
               child: Padding(
                 padding: EdgeInsets.all(16.0),
@@ -369,8 +396,8 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: _isLoading ? null : _changePassword,
-                  child: _isLoading
+                  onPressed: isLoading ? null : _changePassword,
+                  child: isLoading
                       ? const Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
@@ -396,7 +423,7 @@ class _ChangePasswordScreenState extends ConsumerState<ChangePasswordScreen> {
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton(
-                  onPressed: _isLoading ? null : () => context.pop(),
+                  onPressed: isLoading ? null : () => context.pop(),
                   child: const Text('Cancel'),
                 ),
               ),

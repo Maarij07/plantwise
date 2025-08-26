@@ -6,8 +6,11 @@ import '../../../../core/constants/app_constants.dart';
 import '../providers/land_size_provider.dart';
 import '../widgets/land_size_setup_dialog.dart';
 import '../widgets/bitmoji_avatar.dart';
+import '../widgets/avatar_selector.dart';
+import '../widgets/unified_avatar.dart';
 import '../../data/services/avatar_service.dart';
 import '../../../authentication/presentation/providers/auth_providers.dart';
+import '../providers/avatar_provider.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -19,7 +22,7 @@ class ProfileScreen extends ConsumerStatefulWidget {
 class _ProfileScreenState extends ConsumerState<ProfileScreen>
     with TickerProviderStateMixin {
   // State for current avatar seed
-  String _currentAvatarSeed = 'john_doe_123'; // TODO: Get from user profile
+  String _currentAvatarSeed = 'default_seed';
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
@@ -54,12 +57,53 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     super.dispose();
   }
 
+  // Method to refresh profile data
+  Future<void> _refreshProfile() async {
+    print('Refreshing profile data...');
+    try {
+      // Invalidate the current user provider to force a refresh
+      ref.invalidate(currentUserProvider);
+      
+      // Wait a bit for the provider to refresh
+      await Future.delayed(const Duration(milliseconds: 500));
+      
+      print('Profile data refreshed successfully');
+    } catch (e) {
+      print('Error refreshing profile: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to refresh profile: $e'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final landSize = ref.watch(landSizeProvider);
+    final currentUserAsync = ref.watch(currentUserProvider);
     final screenWidth = MediaQuery.of(context).size.width;
     final isTablet = screenWidth > 600;
     final isLargeScreen = screenWidth > 1024;
+    
+    // Extract user from AsyncValue - this will automatically update when user data changes
+    final currentUser = currentUserAsync.when(
+      data: (user) => user,
+      loading: () => null,
+      error: (error, stack) {
+        print('Error loading current user: $error');
+        return null;
+      },
+    );
+    
+    // Generate user-specific avatar seed
+    if (currentUser != null && _currentAvatarSeed == 'default_seed') {
+      _currentAvatarSeed = '${currentUser.email?.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_') ?? 'user'}_${currentUser.name?.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '_') ?? 'avatar'}';
+    }
     
     // Responsive padding based on screen size
     final horizontalPadding = isLargeScreen 
@@ -87,13 +131,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
         opacity: _fadeAnimation,
         child: SlideTransition(
           position: _slideAnimation,
-          child: SingleChildScrollView(
-            padding: EdgeInsets.all(horizontalPadding),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
+          child: RefreshIndicator(
+            onRefresh: _refreshProfile,
+            color: AppColors.primary,
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: EdgeInsets.all(horizontalPadding),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                 // Profile Header Section
-                _buildSimpleProfileHeader(context, isTablet),
+                _buildSimpleProfileHeader(context, isTablet, currentUser),
                 const SizedBox(height: 24),
             
             const SizedBox(height: 24),
@@ -246,7 +294,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                       ),
                     ),
                     title: const Text('Edit Profile'),
-                    subtitle: const Text('Update your name, email, and photo'),
+                    subtitle: const Text('Update your name, & email'),
                     trailing: const Icon(Icons.chevron_right),
                     onTap: () => _showEditProfileDialog(context),
                   ),
@@ -630,7 +678,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
             ),
 
                 const SizedBox(height: 32),
-              ],
+                ],
+              ),
             ),
           ),
         ),
@@ -639,7 +688,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
   }
 
   // Build Simple Profile Header
-  Widget _buildSimpleProfileHeader(BuildContext context, bool isTablet) {
+  Widget _buildSimpleProfileHeader(BuildContext context, bool isTablet, dynamic currentUser) {
     return Card(
       elevation: 2,
       child: Padding(
@@ -653,7 +702,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                   CircleAvatar(
                     radius: isTablet ? 40 : 35,
                     backgroundColor: AppColors.primary.withOpacity(0.1),
-                    child: _buildDefaultAvatar('male'),
+                    child: _buildDefaultAvatar(),
                   ),
                   Positioned(
                     bottom: 2,
@@ -682,7 +731,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Shahzaib',
+                    currentUser?.name ?? 'User',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                       fontSize: isTablet ? 24 : 20,
@@ -724,18 +773,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
     );
   }
 
-  // Professional Bitmoji-style avatar system
-  Widget _buildDefaultAvatar(String? gender) {
-    return BitmojiAvatar(
-      seed: _currentAvatarSeed,
-      gender: gender,
+  // Simplified avatar system using UnifiedAvatar
+  Widget _buildDefaultAvatar() {
+    return UnifiedAvatar(
       size: 80,
-      customOptions: AvatarService.getPresetConfig('garden-theme'),
-      fallback: const Icon(
-        Icons.person,
-        size: 40,
-        color: AppColors.primary,
-      ),
     );
   }
 
@@ -764,7 +805,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
               child: CircleAvatar(
                 radius: 40,
                 backgroundColor: AppColors.background,
-                child: _buildDefaultAvatar('male'),
+                        child: _buildDefaultAvatar(),
               ),
             ),
             Positioned(
@@ -792,18 +833,46 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
   }
 
   void _showAvatarSelector(BuildContext context) {
+    String? selectedSeed;
+    
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Choose Your Avatar'),
-        content: const Text(
-          'Avatar selection feature will be available soon. '
-          'For now, you can customize your profile picture in the Edit Profile section.',
+        content: Container(
+          width: double.maxFinite,
+          constraints: const BoxConstraints(maxHeight: 600),
+          child: AvatarPickerWidget(
+            currentSeed: ref.watch(userAvatarProvider),
+            gender: 'male', // Default gender - can be made dynamic later
+            onAvatarSelected: (String newSeed) {
+              selectedSeed = newSeed;
+            },
+          ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Got it'),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              if (selectedSeed != null) {
+                // Update the global avatar provider
+                ref.read(userAvatarProvider.notifier).updateSeed(selectedSeed!);
+              }
+              Navigator.of(context).pop();
+              
+              // Show success message
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Avatar updated successfully!'),
+                  duration: Duration(seconds: 2),
+                  backgroundColor: AppColors.success,
+                ),
+              );
+            },
+            child: const Text('Save'),
           ),
         ],
       ),

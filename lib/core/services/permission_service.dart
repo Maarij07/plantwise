@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../constants/app_constants.dart';
@@ -36,42 +37,84 @@ class PermissionService {
 
   /// Request camera and media permissions with custom dialog
   static Future<bool> requestMediaPermissions(BuildContext context) async {
-    // Check current status
-    final cameraStatus = await Permission.camera.status;
-    final photosStatus = await Permission.photos.status;
-    final storageStatus = await Permission.storage.status;
-
-    if (cameraStatus.isGranted && 
-        (photosStatus.isGranted || storageStatus.isGranted)) {
+    // On web, permissions work differently - just return true
+    // Web browsers handle camera permissions via getUserMedia API
+    if (kIsWeb) {
       return true;
     }
 
-    // Show custom permission dialog
-    final shouldRequest = await _showPermissionDialog(
-      context,
-      title: 'Capture & Identify! 📸',
-      subtitle: 'Discover plants through your camera',
-      description: 'PlantWise needs camera and media permissions to:\n\n'
-          '📷 Take photos of plants\n'
-          '🔍 Identify plants automatically\n'
-          '🖼️ Save plant photos to gallery\n'
-          '📱 Access your plant photo library',
-      icon: Icons.camera_alt_outlined,
-      primaryColor: Theme.of(context).colorScheme.secondary,
-    );
+    try {
+      // Check current status
+      final cameraStatus = await Permission.camera.status;
+      
+      // Handle photos permission carefully - not supported on all platforms
+      PermissionStatus? photosStatus;
+      PermissionStatus? storageStatus;
+      
+      try {
+        photosStatus = await Permission.photos.status;
+      } catch (e) {
+        print('Photos permission not supported on this platform: $e');
+      }
+      
+      try {
+        storageStatus = await Permission.storage.status;
+      } catch (e) {
+        print('Storage permission not supported on this platform: $e');
+      }
 
-    if (!shouldRequest) return false;
+      if (cameraStatus.isGranted && 
+          (photosStatus?.isGranted == true || storageStatus?.isGranted == true)) {
+        return true;
+      }
 
-    // Request the actual permissions
-    final results = await [
-      Permission.camera,
-      Permission.photos,
-      Permission.storage,
-    ].request();
+      // Show custom permission dialog
+      final shouldRequest = await _showPermissionDialog(
+        context,
+        title: 'Capture & Identify! 📸',
+        subtitle: 'Discover plants through your camera',
+        description: 'PlantWise needs camera and media permissions to:\n\n'
+            '📷 Take photos of plants\n'
+            '🔍 Identify plants automatically\n'
+            '🖼️ Save plant photos to gallery\n'
+            '📱 Access your plant photo library',
+        icon: Icons.camera_alt_outlined,
+        primaryColor: Theme.of(context).colorScheme.secondary,
+      );
 
-    return results[Permission.camera]!.isGranted && 
-           (results[Permission.photos]!.isGranted || 
-            results[Permission.storage]!.isGranted);
+      if (!shouldRequest) return false;
+
+      // Request the actual permissions
+      final permissions = <Permission>[Permission.camera];
+      
+      // Only add permissions that are supported on this platform
+      try {
+        await Permission.photos.status;
+        permissions.add(Permission.photos);
+      } catch (e) {
+        print('Skipping photos permission - not supported: $e');
+      }
+      
+      try {
+        await Permission.storage.status;
+        permissions.add(Permission.storage);
+      } catch (e) {
+        print('Skipping storage permission - not supported: $e');
+      }
+      
+      final results = await permissions.request();
+
+      // Check if camera is granted and at least one storage permission is granted
+      final cameraGranted = results[Permission.camera]?.isGranted ?? false;
+      final photosGranted = results[Permission.photos]?.isGranted ?? false;
+      final storageGranted = results[Permission.storage]?.isGranted ?? false;
+      
+      return cameraGranted && (photosGranted || storageGranted);
+    } catch (e) {
+      print('Error requesting media permissions: $e');
+      // Return false for permission errors, but true for web compatibility
+      return kIsWeb;
+    }
   }
 
   /// Show a custom permission request dialog
@@ -111,9 +154,10 @@ class PermissionService {
             ),
             child: Padding(
               padding: EdgeInsets.all(isTablet ? 32 : 24),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
+              child: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
                   // Icon with gradient background
                   Container(
                     width: isTablet ? 80 : 64,
@@ -284,6 +328,7 @@ class PermissionService {
                     textAlign: TextAlign.center,
                   ),
                 ],
+                ),
               ),
             ),
           ),

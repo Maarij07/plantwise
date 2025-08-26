@@ -1,39 +1,42 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import '../../../../config/theme/app_theme.dart';
+import '../providers/avatar_provider.dart';
 import '../../data/services/avatar_service.dart';
 
-class BitmojiAvatar extends StatelessWidget {
-  final String? seed;
-  final String? gender;
+class UnifiedAvatar extends ConsumerWidget {
   final double size;
-  final String? style;
-  final Map<String, dynamic>? customOptions;
-  final Widget? fallback;
   final BorderRadius? borderRadius;
   final BoxBorder? border;
   final List<BoxShadow>? boxShadow;
+  final Widget? fallback;
+  final bool showLoadingIndicator;
+  final String? customSeed; // Optional custom seed override
 
-  const BitmojiAvatar({
+  const UnifiedAvatar({
     super.key,
-    this.seed,
-    this.gender,
     this.size = 80,
-    this.style,
-    this.customOptions,
-    this.fallback,
     this.borderRadius,
     this.border,
     this.boxShadow,
+    this.fallback,
+    this.showLoadingIndicator = true,
+    this.customSeed,
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Get the avatar seed - use custom seed if provided, otherwise use user's current seed
+    final userSeed = ref.watch(userAvatarProvider);
+    final seed = customSeed ?? userSeed;
+
+    // Generate avatar URL using micah style
     final avatarUrl = AvatarService.generateAvatarUrl(
       seed: seed,
-      gender: gender,
-      style: style,
+      style: 'micah', // Always use micah style
       size: size.toInt(),
-      customOptions: customOptions,
+      // No fixed colors - let each seed generate its own unique colors
     );
 
     return Container(
@@ -48,7 +51,7 @@ class BitmojiAvatar extends StatelessWidget {
         borderRadius: borderRadius ?? BorderRadius.circular(size / 2),
         child: SvgPicture.network(
           avatarUrl,
-          key: ValueKey('bitmoji_${seed}_${size.toInt()}_${style ?? 'default'}'), // Force refresh when parameters change
+          key: ValueKey('avatar_${seed}_${size.toInt()}'), // Force refresh when seed changes
           width: size,
           height: size,
           fit: BoxFit.cover,
@@ -65,11 +68,20 @@ class BitmojiAvatar extends StatelessWidget {
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: Colors.grey[200],
+        color: AppColors.primary.withOpacity(0.1),
         borderRadius: BorderRadius.circular(size / 2),
       ),
-      child: const Center(
-        child: CircularProgressIndicator(strokeWidth: 2),
+      child: Center(
+        child: showLoadingIndicator 
+            ? CircularProgressIndicator(
+                strokeWidth: size > 50 ? 2 : 1.5,
+                valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+              )
+            : Icon(
+                Icons.person,
+                size: size * 0.5,
+                color: AppColors.primary.withOpacity(0.5),
+              ),
       ),
     );
   }
@@ -79,38 +91,36 @@ class BitmojiAvatar extends StatelessWidget {
       width: size,
       height: size,
       decoration: BoxDecoration(
-        color: Colors.grey[300],
+        color: AppColors.primary.withOpacity(0.1),
         borderRadius: BorderRadius.circular(size / 2),
       ),
       child: Icon(
         Icons.person,
         size: size * 0.6,
-        color: Colors.grey[600],
+        color: AppColors.primary,
       ),
     );
   }
 }
 
-class AvatarSelector extends StatefulWidget {
-  final String? gender;
+// Avatar selector widget for choosing different Micah variations
+class MicahAvatarSelector extends ConsumerStatefulWidget {
   final String? currentSeed;
   final Function(String)? onAvatarSelected;
   final int optionsCount;
 
-  const AvatarSelector({
+  const MicahAvatarSelector({
     super.key,
-    this.gender,
     this.currentSeed,
     this.onAvatarSelected,
     this.optionsCount = 6,
   });
 
   @override
-  State<AvatarSelector> createState() => _AvatarSelectorState();
+  ConsumerState<MicahAvatarSelector> createState() => _MicahAvatarSelectorState();
 }
 
-class _AvatarSelectorState extends State<AvatarSelector> {
-  List<String> _avatarUrls = [];
+class _MicahAvatarSelectorState extends ConsumerState<MicahAvatarSelector> {
   List<String> _avatarSeeds = [];
   String? _selectedSeed;
   bool _isLoading = true;
@@ -126,26 +136,18 @@ class _AvatarSelectorState extends State<AvatarSelector> {
       _isLoading = true;
     });
 
-    // Generate seeds for each avatar option
+    final userSeed = ref.read(avatarSeedProvider);
+    final baseSeed = widget.currentSeed ?? userSeed;
+    
+    // Generate seeds for each avatar option using Micah style variations
     _avatarSeeds.clear();
-    _avatarUrls.clear();
 
     for (int i = 0; i < widget.optionsCount; i++) {
-      String seed = widget.currentSeed != null 
-          ? '${widget.currentSeed}_option_$i' 
-          : 'option_${DateTime.now().millisecondsSinceEpoch}_$i';
-      
+      String seed = '${baseSeed}_micah_$i';
       _avatarSeeds.add(seed);
-      _avatarUrls.add(
-        AvatarService.generateAvatarUrl(
-          seed: seed,
-          gender: widget.gender,
-          size: 120,
-        ),
-      );
     }
 
-    _selectedSeed = widget.currentSeed;
+    _selectedSeed = widget.currentSeed ?? baseSeed;
     
     setState(() {
       _isLoading = false;
@@ -174,7 +176,7 @@ class _AvatarSelectorState extends State<AvatarSelector> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'Choose Your Avatar',
+              'Choose Your Micah Avatar',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
@@ -199,52 +201,37 @@ class _AvatarSelectorState extends State<AvatarSelector> {
               crossAxisCount: 3,
               crossAxisSpacing: 12,
               mainAxisSpacing: 12,
+              childAspectRatio: 1,
             ),
-            itemCount: _avatarUrls.length,
+            itemCount: _avatarSeeds.length,
             itemBuilder: (context, index) {
-              final isSelected = _selectedSeed == _avatarSeeds[index];
+              final seed = _avatarSeeds[index];
+              final isSelected = _selectedSeed == seed;
               
               return GestureDetector(
                 onTap: () => _selectAvatar(index),
                 child: Container(
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: isSelected 
-                          ? Theme.of(context).primaryColor 
-                          : Colors.grey[300]!,
+                      color: isSelected ? AppColors.primary : Colors.grey.shade300,
                       width: isSelected ? 3 : 1,
                     ),
-                    boxShadow: isSelected
-                        ? [
-                            BoxShadow(
-                              color: Theme.of(context).primaryColor.withOpacity(0.3),
-                              spreadRadius: 0,
-                              blurRadius: 8,
-                              offset: const Offset(0, 4),
-                            ),
-                          ]
-                        : null,
+                    boxShadow: isSelected ? [
+                      BoxShadow(
+                        color: AppColors.primary.withOpacity(0.3),
+                        blurRadius: 8,
+                        spreadRadius: 2,
+                      ),
+                    ] : null,
                   ),
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(15),
-                    child: SvgPicture.network(
-                      _avatarUrls[index],
-                      key: ValueKey('avatar_selector_${_avatarSeeds[index]}'), // Force refresh when seed changes
-                      fit: BoxFit.cover,
-                      placeholderBuilder: (context) => Container(
-                        color: Colors.grey[200],
-                        child: const Center(
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        ),
-                      ),
-                      errorBuilder: (context, error, stackTrace) => Container(
-                        color: Colors.grey[300],
-                        child: Icon(
-                          Icons.person,
-                          color: Colors.grey[600],
-                        ),
-                      ),
+                    borderRadius: BorderRadius.circular(12),
+                    child: UnifiedAvatar(
+                      customSeed: seed,
+                      size: 80,
+                      borderRadius: BorderRadius.circular(12),
+                      showLoadingIndicator: false,
                     ),
                   ),
                 ),

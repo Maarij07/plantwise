@@ -54,21 +54,12 @@ class AvatarService {
 
   // Get style based on gender preference
   static String _getStyleForGender(String? gender, String? preferredStyle) {
+    // Use preferred style if provided, otherwise use micah as default
     if (preferredStyle != null && _avatarStyles.containsKey(preferredStyle)) {
       return _avatarStyles[preferredStyle]!;
     }
-
-    switch (gender?.toLowerCase()) {
-      case 'male':
-        return _avatarStyles['micah']!; // Masculine style
-      case 'female':
-        return _avatarStyles['lorelei']!; // Feminine style
-      case 'non-binary':
-      case 'other':
-        return _avatarStyles['adventurer-neutral']!; // Gender neutral
-      default:
-        return _avatarStyles['avataaars']!; // Default Bitmoji-style
-    }
+    // Default to micah style
+    return _avatarStyles['micah']!;
   }
 
   // Generate random seed for new users
@@ -150,6 +141,73 @@ class AvatarService {
     } catch (e) {
       print('Error fetching avatar: $e');
       return null;
+    }
+  }
+
+  // Get style-specific configuration options
+  static Map<String, dynamic> getStyleConfig(String style) {
+    switch (style) {
+      case 'adventurer':
+        return {
+          'backgroundColor': ['dcfce7', 'd1fae5', 'bbf7d0'].join(','),
+          'hairColor': ['2d5016', '365314', '4d7c0f'].join(','),
+        };
+      case 'adventurer-neutral':
+        return {
+          'backgroundColor': ['f1f5f9', 'e2e8f0', 'cbd5e1'].join(','),
+        };
+      case 'avataaars':
+        return {
+          'backgroundColor': ['fef3c7', 'fde68a', 'fed7aa'].join(','),
+          'clothingColor': ['1f2937', '374151', '4b5563'].join(','),
+        };
+      case 'big-ears':
+        return {
+          'backgroundColor': ['ecfdf5', 'd1fae5', 'bbf7d0'].join(','),
+        };
+      case 'big-smile':
+        return {
+          'backgroundColor': ['fef3c7', 'fde68a', 'fed7aa'].join(','),
+          'mood': ['happy', 'blissful'].join(','),
+        };
+      case 'bottts':
+        return {
+          'backgroundColor': ['f1f5f9', 'e2e8f0', 'cbd5e1'].join(','),
+          'colorful': 'true',
+        };
+      case 'croodles':
+        return {
+          'backgroundColor': ['fef7ff', 'fae8ff', 'f3e8ff'].join(','),
+        };
+      case 'fun-emoji':
+        return {
+          'backgroundColor': ['fff7ed', 'fed7aa', 'fdba74'].join(','),
+        };
+      case 'micah':
+        return {
+          'backgroundColor': ['f0f9ff', 'e0f2fe', 'bae6fd'].join(','),
+          'baseColor': ['f0f9ff', 'e0f2fe'].join(','),
+        };
+      case 'miniavs':
+        return {
+          'backgroundColor': ['f8fafc', 'f1f5f9', 'e2e8f0'].join(','),
+        };
+      case 'open-peeps':
+        return {
+          'backgroundColor': ['fef7ff', 'fae8ff', 'f3e8ff'].join(','),
+        };
+      case 'personas':
+        return {
+          'backgroundColor': ['f1f4f8', 'ffffff', 'e2e8f0'].join(','),
+          'accessories': ['glasses'],
+          'accessoriesProbability': '20',
+        };
+      case 'pixel-art':
+        return {
+          'backgroundColor': ['1e293b', '334155', '475569'].join(','),
+        };
+      default:
+        return {};
     }
   }
 

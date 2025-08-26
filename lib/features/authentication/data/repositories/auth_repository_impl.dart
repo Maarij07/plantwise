@@ -38,6 +38,24 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  Future<User> updateUser({
+    required String userId,
+    String? name,
+    String? email,
+    String? photoUrl,
+  }) async {
+    print('AuthRepositoryImpl: Starting user update for $userId');
+    final userModel = await _authDataSource.updateUser(
+      userId: userId,
+      name: name,
+      email: email,
+      photoUrl: photoUrl,
+    );
+    print('AuthRepositoryImpl: User update completed successfully');
+    return userModel.toEntity();
+  }
+
+  @override
   Future<void> signOut() async {
     await _authDataSource.signOut();
   }
@@ -45,6 +63,19 @@ class AuthRepositoryImpl implements AuthRepository {
   @override
   Future<void> sendPasswordResetEmail({required String email}) async {
     await _authDataSource.sendPasswordResetEmail(email: email);
+  }
+
+  @override
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    print('AuthRepositoryImpl: Starting password change');
+    await _authDataSource.changePassword(
+      currentPassword: currentPassword,
+      newPassword: newPassword,
+    );
+    print('AuthRepositoryImpl: Password change completed successfully');
   }
 
   @override

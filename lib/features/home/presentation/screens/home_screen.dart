@@ -8,8 +8,6 @@ import '../../../profile/presentation/screens/profile_screen.dart';
 import '../../../plants/presentation/screens/my_plants_screen.dart';
 import '../../../community/presentation/screens/community_screen.dart';
 import '../../../notifications/presentation/screens/notifications_screen.dart';
-import '../../../profile/presentation/widgets/bitmoji_avatar.dart';
-import '../../../profile/data/services/avatar_service.dart';
 import '../widgets/weather_welcome_header.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -145,14 +143,17 @@ class _DashboardTabState extends ConsumerState<_DashboardTab> with TickerProvide
     return TimeGreetingUtils.getMotivationalMessage();
   }
 
-  // Build Bitmoji avatar - same as profile page
-  Widget _buildDefaultAvatar(String? gender, double size) {
-    return BitmojiAvatar(
-      seed: _currentAvatarSeed,
-      gender: gender,
-      size: size,
-      customOptions: AvatarService.getPresetConfig('garden-theme'),
-      fallback: Icon(
+  // Build unified avatar - consistent across app
+  Widget _buildDefaultAvatar(double size) {
+    // Simple safe avatar that doesn't depend on async providers
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: AppColors.primary.withOpacity(0.1),
+        shape: BoxShape.circle,
+      ),
+      child: Icon(
         Icons.person,
         size: size * 0.5,
         color: AppColors.primary,
@@ -295,9 +296,9 @@ class _DashboardTabState extends ConsumerState<_DashboardTab> with TickerProvide
           ),
         ),
 
-        // Bottom padding for FAB
+        // Bottom padding for FAB and bottom navigation
         const SliverToBoxAdapter(
-          child: SizedBox(height: 100),
+          child: SizedBox(height: 120),
         ),
       ],
     );
@@ -314,7 +315,7 @@ class _DashboardTabState extends ConsumerState<_DashboardTab> with TickerProvide
               horizontal: horizontalPadding,
               vertical: AppConstants.paddingMedium,
             ),
-            child: const WeatherWelcomeHeader(),
+            child: _buildResponsiveWelcomeHeader(context),
           ),
         ),
 
@@ -432,7 +433,7 @@ class _DashboardTabState extends ConsumerState<_DashboardTab> with TickerProvide
                       child: CircleAvatar(
                         radius: isTablet ? 32 : 22,
                         backgroundColor: AppColors.background,
-                        child: _buildDefaultAvatar('male', isTablet ? 64 : 44),
+                        child: _buildDefaultAvatar(isTablet ? 64 : 44),
                       ),
                     ),
                     const SizedBox(width: 16),
@@ -1140,87 +1141,49 @@ class _DashboardTabState extends ConsumerState<_DashboardTab> with TickerProvide
       ),
     );
   }
-}
 
-class _StatCard extends StatelessWidget {
-  final String title;
-  final String value;
-  final IconData icon;
-  final Color color;
-
-  const _StatCard({
-    required this.title,
-    required this.value,
-    required this.icon,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(AppConstants.paddingMedium),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Icon(icon, color: color),
-                Text(
-                  value,
-                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: color,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              title,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: AppColors.grey600,
+  // Helper methods for dashboard components
+  Widget _buildQuickActionButton(
+    BuildContext context,
+    String label,
+    IconData icon,
+    VoidCallback onPressed,
+  ) {
+    return Expanded(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 60,
+            height: 60,
+            decoration: BoxDecoration(
+              color: AppColors.primary.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(30),
+              border: Border.all(
+                color: AppColors.primary.withOpacity(0.3),
+                width: 1,
               ),
             ),
-          ],
-        ),
+            child: IconButton(
+              icon: Icon(icon, color: AppColors.primary),
+              onPressed: onPressed,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
       ),
     );
   }
-}
 
-class _TaskCard extends StatelessWidget {
-  final String title;
-  final String subtitle;
-  final IconData icon;
-  final VoidCallback onTap;
-
-  const _TaskCard({
-    required this.title,
-    required this.subtitle,
-    required this.icon,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: AppColors.primary.withOpacity(0.1),
-          child: Icon(icon, color: AppColors.primary),
-        ),
-        title: Text(title),
-        subtitle: Text(subtitle),
-        trailing: const Icon(Icons.chevron_right),
-        onTap: onTap,
-      ),
-    );
-  }
-}
-
-  // Responsive wrapper methods
+  // Responsive stats section
   Widget _buildResponsiveStatsSection(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isTablet = screenWidth > 600;
@@ -1382,6 +1345,113 @@ class _TaskCard extends StatelessWidget {
     );
   }
 
+  // Enhanced stat card widget
+  Widget _buildEnhancedStatCard(
+    BuildContext context, {
+    required String title,
+    required String value,
+    required double progress,
+    required IconData icon,
+    required Color color,
+    required String trend,
+    required bool isPositive,
+  }) {
+    return GestureDetector(
+      onTap: () {
+        // TODO: Navigate to detailed stats
+      },
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              color.withOpacity(0.1),
+              color.withOpacity(0.05),
+            ],
+          ),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: color.withOpacity(0.2),
+            width: 1,
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Icon(icon, color: color, size: 20),
+                ),
+                Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    SizedBox(
+                      width: 30,
+                      height: 30,
+                      child: CircularProgressIndicator(
+                        value: progress,
+                        strokeWidth: 3,
+                        backgroundColor: color.withOpacity(0.2),
+                        valueColor: AlwaysStoppedAnimation<Color>(color),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              value,
+              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              title,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: AppColors.grey600,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Icon(
+                  isPositive ? Icons.trending_up : Icons.trending_down,
+                  size: 14,
+                  color: isPositive ? AppColors.success : AppColors.error,
+                ),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    trend,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: isPositive ? AppColors.success : AppColors.error,
+                      fontWeight: FontWeight.w500,
+                      fontSize: 11,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Add other responsive dashboard methods
   Widget _buildResponsivePlantHealthOverview(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isTablet = screenWidth > 600;
@@ -1488,143 +1558,102 @@ class _TaskCard extends StatelessWidget {
     );
   }
 
-  Widget _buildResponsiveTodaysTasks(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isTablet = screenWidth > 600;
-    
+  Widget _buildResponsiveHealthStatusItem(
+    String label, 
+    int count, 
+    Color color, 
+    IconData icon, 
+    bool isTablet,
+  ) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'Today\'s Tasks',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-                fontSize: isTablet ? 22 : 18,
-              ),
-            ),
-            Container(
-              padding: EdgeInsets.symmetric(
-                horizontal: isTablet ? 16 : 12, 
-                vertical: isTablet ? 8 : 6,
-              ),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Text(
-                '3 pending',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: AppColors.primary,
-                  fontWeight: FontWeight.bold,
-                  fontSize: isTablet ? 14 : 12,
-                ),
-              ),
-            ),
-          ],
-        ),
-        SizedBox(height: isTablet ? 20 : 16),
-        _buildResponsiveTaskCard(
-          context,
-          title: 'Water Monstera Deliciosa',
-          subtitle: 'Living Room',
-          timeInfo: 'Due in 2 hours',
-          icon: Icons.water_drop,
-          priority: 'high',
-          plantImage: Icons.eco,
+        Container(
+          padding: EdgeInsets.all(isTablet ? 12 : 8),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(isTablet ? 12 : 8),
+          ),
+          child: Icon(icon, color: color, size: isTablet ? 24 : 20),
         ),
         SizedBox(height: isTablet ? 12 : 8),
-        _buildResponsiveTaskCard(
-          context,
-          title: 'Fertilize Snake Plant',
-          subtitle: 'Bedroom',
-          timeInfo: 'Due today',
-          icon: Icons.grass,
-          priority: 'medium',
-          plantImage: Icons.eco,
+        Text(
+          count.toString(),
+          style: TextStyle(
+            fontSize: isTablet ? 22 : 18,
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
         ),
-        SizedBox(height: isTablet ? 12 : 8),
-        _buildResponsiveTaskCard(
-          context,
-          title: 'Health Check - Fiddle Leaf Fig',
-          subtitle: 'Office',
-          timeInfo: 'Weekly check',
-          icon: Icons.visibility,
-          priority: 'low',
-          plantImage: Icons.eco,
+        SizedBox(height: isTablet ? 8 : 4),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: isTablet ? 14 : 12,
+            color: AppColors.grey600,
+          ),
+          textAlign: TextAlign.center,
         ),
-        SizedBox(height: isTablet ? 32 : 24),
       ],
     );
   }
 
+  // Add remaining responsive methods as needed
+  Widget _buildResponsiveTodaysTasks(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Today\'s Tasks',
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'No tasks for today',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: AppColors.grey600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildResponsiveWeatherWidget(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isTablet = screenWidth > 600;
-    
     return Card(
       elevation: 4,
       child: Padding(
-        padding: EdgeInsets.all(isTablet ? 24 : 20),
+        padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Garden Conditions',
+              'Weather',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
-                fontSize: isTablet ? 18 : 16,
               ),
             ),
-            SizedBox(height: isTablet ? 20 : 16),
+            const SizedBox(height: 16),
             Row(
               children: [
-                Expanded(
-                  child: _buildResponsiveConditionItem(
-                    context, 'Temperature', '24°C', Icons.thermostat, AppColors.warning, isTablet),
-                ),
-                Expanded(
-                  child: _buildResponsiveConditionItem(
-                    context, 'Humidity', '65%', Icons.water_drop, AppColors.info, isTablet),
-                ),
-                Expanded(
-                  child: _buildResponsiveConditionItem(
-                    context, 'UV Index', '7', Icons.wb_sunny, AppColors.error, isTablet),
-                ),
-              ],
-            ),
-            SizedBox(height: isTablet ? 20 : 16),
-            Container(
-              padding: EdgeInsets.all(isTablet ? 16 : 12),
-              decoration: BoxDecoration(
-                color: AppColors.success.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: AppColors.success.withOpacity(0.3),
-                ),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    Icons.tips_and_updates,
-                    color: AppColors.success,
-                    size: isTablet ? 24 : 20,
-                  ),
-                  SizedBox(width: isTablet ? 12 : 8),
-                  Expanded(
-                    child: Text(
-                      'Perfect conditions for watering! Morning is ideal.',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.success,
-                        fontWeight: FontWeight.w500,
-                        fontSize: isTablet ? 16 : 14,
+                const Icon(Icons.wb_sunny, size: 40, color: AppColors.warning),
+                const SizedBox(width: 16),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('24°C', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                    Text(
+                      'Sunny',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: AppColors.grey600,
                       ),
                     ),
-                  ),
-                ],
-              ),
+                  ],
+                ),
+              ],
             ),
           ],
         ),
@@ -1633,59 +1662,25 @@ class _TaskCard extends StatelessWidget {
   }
 
   Widget _buildResponsiveRecentActivity(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isTablet = screenWidth > 600;
-    
     return Card(
       elevation: 4,
       child: Padding(
-        padding: EdgeInsets.all(isTablet ? 24 : 20),
+        padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Recent Activity',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    fontSize: isTablet ? 18 : 16,
-                  ),
-                ),
-                TextButton(
-                  onPressed: () {},
-                  child: Text(
-                    'View All',
-                    style: TextStyle(fontSize: isTablet ? 16 : 14),
-                  ),
-                ),
-              ],
+            Text(
+              'Recent Activity',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
             ),
-            SizedBox(height: isTablet ? 20 : 16),
-            _buildResponsiveActivityItem(
-              context,
-              'Watered Monstera Deliciosa',
-              '2 hours ago',
-              Icons.water_drop,
-              AppColors.info,
-              isTablet,
-            ),
-            _buildResponsiveActivityItem(
-              context,
-              'Added new Snake Plant',
-              '1 day ago',
-              Icons.add_circle,
-              AppColors.success,
-              isTablet,
-            ),
-            _buildResponsiveActivityItem(
-              context,
-              'Earned "Green Thumb" badge',
-              '2 days ago',
-              Icons.emoji_events,
-              AppColors.warning,
-              isTablet,
+            const SizedBox(height: 16),
+            Text(
+              'No recent activity',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: AppColors.grey600,
+              ),
             ),
           ],
         ),
@@ -1694,175 +1689,25 @@ class _TaskCard extends StatelessWidget {
   }
 
   Widget _buildResponsiveAchievementStreaks(BuildContext context) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isTablet = screenWidth > 600;
-    
     return Card(
       elevation: 4,
       child: Padding(
-        padding: EdgeInsets.all(isTablet ? 24 : 20),
+        padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Achievements & Streaks',
+              'Achievements',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
-                fontSize: isTablet ? 18 : 16,
               ),
             ),
-            SizedBox(height: isTablet ? 20 : 16),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildResponsiveAchievementItem(
-                    context,
-                    'Care Streak',
-                    '7 days',
-                    Icons.local_fire_department,
-                    AppColors.error,
-                    0.7,
-                    isTablet,
-                  ),
-                ),
-                SizedBox(width: isTablet ? 20 : 16),
-                Expanded(
-                  child: _buildResponsiveAchievementItem(
-                    context,
-                    'Weekly Goal',
-                    '5/7 tasks',
-                    Icons.track_changes,
-                    AppColors.primary,
-                    5/7,
-                    isTablet,
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: isTablet ? 20 : 16),
+            const SizedBox(height: 16),
             Text(
-              'Recent Badges',
+              'No achievements yet',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                fontSize: isTablet ? 16 : 14,
-              ),
-            ),
-            SizedBox(height: isTablet ? 16 : 12),
-            Row(
-              children: [
-                _buildResponsiveBadge(Icons.eco, 'Green Thumb', isTablet),
-                SizedBox(width: isTablet ? 16 : 12),
-                _buildResponsiveBadge(Icons.water_drop, 'Hydro Hero', isTablet),
-                SizedBox(width: isTablet ? 16 : 12),
-                _buildResponsiveBadge(Icons.favorite, 'Plant Parent', isTablet),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  // Helper widget methods for enhanced dashboard components
-
-  Widget _buildEnhancedStatCard(
-    BuildContext context, {
-    required String title,
-    required String value,
-    required double progress,
-    required IconData icon,
-    required Color color,
-    required String trend,
-    required bool isPositive,
-  }) {
-    return GestureDetector(
-      onTap: () {
-        // TODO: Navigate to detailed stats
-      },
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              color.withOpacity(0.1),
-              color.withOpacity(0.05),
-            ],
-          ),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: color.withOpacity(0.2),
-            width: 1,
-          ),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: color.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Icon(icon, color: color, size: 20),
-                ),
-                Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    SizedBox(
-                      width: 30,
-                      height: 30,
-                      child: CircularProgressIndicator(
-                        value: progress,
-                        strokeWidth: 3,
-                        backgroundColor: color.withOpacity(0.2),
-                        valueColor: AlwaysStoppedAnimation<Color>(color),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Text(
-              value,
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: color,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              title,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
                 color: AppColors.grey600,
-                fontWeight: FontWeight.w500,
               ),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Icon(
-                  isPositive ? Icons.trending_up : Icons.trending_down,
-                  size: 14,
-                  color: isPositive ? AppColors.success : AppColors.error,
-                ),
-                const SizedBox(width: 4),
-                Expanded(
-                  child: Text(
-                    trend,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: isPositive ? AppColors.success : AppColors.error,
-                      fontWeight: FontWeight.w500,
-                      fontSize: 11,
-                    ),
-                  ),
-                ),
-              ],
             ),
           ],
         ),
@@ -1870,6 +1715,7 @@ class _TaskCard extends StatelessWidget {
     );
   }
 
+  // Add missing helper methods
   Widget _buildHealthStatusItem(String label, int count, Color color, IconData icon) {
     return Column(
       children: [
@@ -1924,97 +1770,55 @@ class _TaskCard extends StatelessWidget {
         priorityColor = AppColors.success;
     }
 
-    return Dismissible(
-      key: Key(title),
-      background: Container(
-        alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 20),
-        decoration: BoxDecoration(
-          color: AppColors.success,
-          borderRadius: BorderRadius.circular(12),
+    return Card(
+      child: ListTile(
+        leading: Stack(
+          children: [
+            CircleAvatar(
+              backgroundColor: AppColors.primary.withOpacity(0.1),
+              child: Icon(plantImage, color: AppColors.primary),
+            ),
+            Positioned(
+              bottom: 0,
+              right: 0,
+              child: Container(
+                width: 12,
+                height: 12,
+                decoration: BoxDecoration(
+                  color: priorityColor,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 2),
+                ),
+              ),
+            ),
+          ],
         ),
-        child: const Icon(Icons.check, color: Colors.white),
-      ),
-      direction: DismissDirection.endToStart,
-      onDismissed: (_) {
-        // TODO: Mark task as complete
-      },
-      child: Card(
-        child: ListTile(
-          leading: Stack(
-            children: [
-              CircleAvatar(
-                backgroundColor: AppColors.primary.withOpacity(0.1),
-                child: Icon(plantImage, color: AppColors.primary),
-              ),
-              Positioned(
-                bottom: 0,
-                right: 0,
-                child: Container(
-                  width: 16,
-                  height: 16,
-                  decoration: BoxDecoration(
-                    color: priorityColor,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 2),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          title: Text(
-            title,
-            style: const TextStyle(fontWeight: FontWeight.w500),
-          ),
-          subtitle: Row(
-            children: [
-              Icon(
-                Icons.location_on,
-                size: 14,
-                color: AppColors.grey600,
-              ),
-              const SizedBox(width: 4),
-              Flexible(
-                child: Text(
-                  subtitle,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              const Text(' • '),
-              Flexible(
-                child: Text(
-                  timeInfo,
-                  style: TextStyle(color: priorityColor),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
-          ),
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              IconButton(
-                icon: Icon(icon, color: AppColors.primary),
-                onPressed: () {
-                  // TODO: Perform quick action
-                },
-              ),
-              const Icon(Icons.chevron_right),
-            ],
-          ),
-          onTap: () {
-            // TODO: Navigate to task details
+        title: Text(
+          title,
+          style: const TextStyle(fontWeight: FontWeight.w500),
+        ),
+        subtitle: Text(
+          '$subtitle • $timeInfo',
+          style: TextStyle(color: priorityColor),
+        ),
+        trailing: IconButton(
+          icon: Icon(icon, color: AppColors.primary),
+          onPressed: () {
+            // TODO: Perform quick action
           },
         ),
+        onTap: () {
+          // TODO: Navigate to task details
+        },
       ),
     );
   }
 
   Widget _buildConditionItem(
-    BuildContext context, 
-    String label, 
-    String value, 
-    IconData icon, 
+    BuildContext context,
+    String label,
+    String value,
+    IconData icon,
     Color color,
   ) {
     return Column(
@@ -2179,417 +1983,82 @@ class _TaskCard extends StatelessWidget {
       ),
     );
   }
+}
 
-  Widget _buildQuickActionButton(
-    BuildContext context,
-    String label,
-    IconData icon,
-    VoidCallback onPressed,
-  ) {
-    return Expanded(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 60,
-            height: 60,
-            decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(30),
-              border: Border.all(
-                color: AppColors.primary.withOpacity(0.3),
-                width: 1,
-              ),
-            ),
-            child: IconButton(
-              icon: Icon(icon, color: AppColors.primary),
-              onPressed: onPressed,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
+class _StatCard extends StatelessWidget {
+  final String title;
+  final String value;
+  final IconData icon;
+  final Color color;
 
-  // Responsive helper methods for specific components
-  
-  Widget _buildResponsiveHealthStatusItem(
-    String label, 
-    int count, 
-    Color color, 
-    IconData icon, 
-    bool isTablet,
-  ) {
-    return Column(
-      children: [
-        Container(
-          padding: EdgeInsets.all(isTablet ? 12 : 8),
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(isTablet ? 12 : 8),
-          ),
-          child: Icon(icon, color: color, size: isTablet ? 24 : 20),
-        ),
-        SizedBox(height: isTablet ? 12 : 8),
-        Text(
-          count.toString(),
-          style: TextStyle(
-            fontSize: isTablet ? 22 : 18,
-            fontWeight: FontWeight.bold,
-            color: color,
-          ),
-        ),
-        SizedBox(height: isTablet ? 8 : 4),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: isTablet ? 14 : 12,
-            color: AppColors.grey600,
-          ),
-          textAlign: TextAlign.center,
-        ),
-      ],
-    );
-  }
+  const _StatCard({
+    required this.title,
+    required this.value,
+    required this.icon,
+    required this.color,
+  });
 
-  Widget _buildResponsiveTaskCard(
-    BuildContext context, {
-    required String title,
-    required String subtitle,
-    required String timeInfo,
-    required IconData icon,
-    required String priority,
-    required IconData plantImage,
-  }) {
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isTablet = screenWidth > 600;
-    
-    Color priorityColor;
-    switch (priority) {
-      case 'high':
-        priorityColor = AppColors.error;
-        break;
-      case 'medium':
-        priorityColor = AppColors.warning;
-        break;
-      default:
-        priorityColor = AppColors.success;
-    }
-
-    return Dismissible(
-      key: Key(title),
-      background: Container(
-        alignment: Alignment.centerRight,
-        padding: EdgeInsets.only(right: isTablet ? 24 : 20),
-        decoration: BoxDecoration(
-          color: AppColors.success,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Icon(
-          Icons.check, 
-          color: Colors.white, 
-          size: isTablet ? 28 : 24,
-        ),
-      ),
-      direction: DismissDirection.endToStart,
-      onDismissed: (_) {
-        // TODO: Mark task as complete
-      },
-      child: Card(
-        child: ListTile(
-          contentPadding: EdgeInsets.all(isTablet ? 20 : 16),
-          leading: Stack(
-            children: [
-              CircleAvatar(
-                radius: isTablet ? 28 : 24,
-                backgroundColor: AppColors.primary.withOpacity(0.1),
-                child: Icon(
-                  plantImage, 
-                  color: AppColors.primary,
-                  size: isTablet ? 24 : 20,
-                ),
-              ),
-              Positioned(
-                bottom: 0,
-                right: 0,
-                child: Container(
-                  width: isTablet ? 20 : 16,
-                  height: isTablet ? 20 : 16,
-                  decoration: BoxDecoration(
-                    color: priorityColor,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 2),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          title: Text(
-            title,
-            style: TextStyle(
-              fontWeight: FontWeight.w500,
-              fontSize: isTablet ? 18 : 16,
-            ),
-          ),
-          subtitle: Padding(
-            padding: const EdgeInsets.only(top: 4),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.location_on,
-                  size: isTablet ? 16 : 14,
-                  color: AppColors.grey600,
-                ),
-                const SizedBox(width: 4),
-                Flexible(
-                  child: Text(
-                    subtitle,
-                    style: TextStyle(fontSize: isTablet ? 16 : 14),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                const Text(' • '),
-                Flexible(
-                  child: Text(
-                    timeInfo,
-                    style: TextStyle(
-                      color: priorityColor,
-                      fontSize: isTablet ? 16 : 14,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              IconButton(
-                icon: Icon(
-                  icon, 
-                  color: AppColors.primary,
-                  size: isTablet ? 24 : 20,
-                ),
-                onPressed: () {
-                  // TODO: Perform quick action
-                },
-              ),
-              Icon(
-                Icons.chevron_right,
-                size: isTablet ? 24 : 20,
-              ),
-            ],
-          ),
-          onTap: () {
-            // TODO: Navigate to task details
-          },
-        ),
-      ),
-    );
-  }
-
-  Widget _buildResponsiveConditionItem(
-    BuildContext context,
-    String label,
-    String value,
-    IconData icon,
-    Color color,
-    bool isTablet,
-  ) {
-    return Column(
-      children: [
-        Container(
-          padding: EdgeInsets.all(isTablet ? 16 : 12),
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
-            borderRadius: BorderRadius.circular(isTablet ? 16 : 12),
-          ),
-          child: Icon(icon, color: color, size: isTablet ? 32 : 24),
-        ),
-        SizedBox(height: isTablet ? 12 : 8),
-        Text(
-          value,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-            color: color,
-            fontSize: isTablet ? 20 : 16,
-          ),
-        ),
-        SizedBox(height: isTablet ? 8 : 4),
-        Text(
-          label,
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: AppColors.grey600,
-            fontSize: isTablet ? 14 : 12,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildResponsiveActivityItem(
-    BuildContext context,
-    String title,
-    String time,
-    IconData icon,
-    Color color,
-    bool isTablet,
-  ) {
-    return Padding(
-      padding: EdgeInsets.symmetric(vertical: isTablet ? 12 : 8),
-      child: Row(
-        children: [
-          Container(
-            padding: EdgeInsets.all(isTablet ? 12 : 8),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(isTablet ? 12 : 8),
-            ),
-            child: Icon(
-              icon, 
-              color: color, 
-              size: isTablet ? 24 : 18,
-            ),
-          ),
-          SizedBox(width: isTablet ? 16 : 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w500,
-                    fontSize: isTablet ? 18 : 16,
-                  ),
-                ),
-                SizedBox(height: isTablet ? 4 : 2),
-                Text(
-                  time,
-                  style: TextStyle(
-                    fontSize: isTablet ? 14 : 12,
-                    color: AppColors.grey600,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildResponsiveAchievementItem(
-    BuildContext context,
-    String title,
-    String value,
-    IconData icon,
-    Color color,
-    double progress,
-    bool isTablet,
-  ) {
-    return Container(
-      padding: EdgeInsets.all(isTablet ? 20 : 16),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(isTablet ? 16 : 12),
-        border: Border.all(
-          color: color.withOpacity(0.3),
-          width: 1,
-        ),
-      ),
-      child: Column(
-        children: [
-          Stack(
-            alignment: Alignment.center,
-            children: [
-              SizedBox(
-                width: isTablet ? 70 : 50,
-                height: isTablet ? 70 : 50,
-                child: CircularProgressIndicator(
-                  value: progress,
-                  strokeWidth: isTablet ? 6 : 4,
-                  backgroundColor: color.withOpacity(0.2),
-                  valueColor: AlwaysStoppedAnimation<Color>(color),
-                ),
-              ),
-              Icon(
-                icon, 
-                color: color, 
-                size: isTablet ? 32 : 24,
-              ),
-            ],
-          ),
-          SizedBox(height: isTablet ? 16 : 12),
-          Text(
-            value,
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: color,
-              fontSize: isTablet ? 20 : 16,
-            ),
-          ),
-          SizedBox(height: isTablet ? 8 : 4),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: isTablet ? 14 : 12,
-              color: AppColors.grey600,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildResponsiveBadge(IconData icon, String label, bool isTablet) {
-    return Expanded(
-      child: Container(
-        padding: EdgeInsets.symmetric(
-          vertical: isTablet ? 12 : 8, 
-          horizontal: isTablet ? 8 : 4,
-        ),
-        decoration: BoxDecoration(
-          color: AppColors.primary.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(isTablet ? 12 : 8),
-          border: Border.all(
-            color: AppColors.primary.withOpacity(0.3),
-            width: 1,
-          ),
-        ),
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(AppConstants.paddingMedium),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(
-              icon, 
-              color: AppColors.primary, 
-              size: isTablet ? 24 : 20,
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Icon(icon, color: color),
+                Text(
+                  value,
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: color,
+                  ),
+                ),
+              ],
             ),
-            SizedBox(height: isTablet ? 8 : 4),
+            const SizedBox(height: 8),
             Text(
-              label,
-              style: TextStyle(
-                fontSize: isTablet ? 12 : 10,
-                color: AppColors.primary,
-                fontWeight: FontWeight.w500,
+              title,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: AppColors.grey600,
               ),
-              textAlign: TextAlign.center,
-              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),
       ),
     );
   }
+}
 
-// Old placeholder tabs removed - now using actual screens
+class _TaskCard extends StatelessWidget {
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const _TaskCard({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      child: ListTile(
+        leading: CircleAvatar(
+          backgroundColor: AppColors.primary.withOpacity(0.1),
+          child: Icon(icon, color: AppColors.primary),
+        ),
+        title: Text(title),
+        subtitle: Text(subtitle),
+        trailing: const Icon(Icons.chevron_right),
+        onTap: onTap,
+      ),
+    );
+  }
+}

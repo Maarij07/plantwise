@@ -196,7 +196,7 @@ class _ThunderstormHeaderState extends State<ThunderstormHeader>
     
     return Container(
       width: double.infinity,
-      height: cardHeight,
+      constraints: BoxConstraints(minHeight: isTablet ? 180 : 150),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,

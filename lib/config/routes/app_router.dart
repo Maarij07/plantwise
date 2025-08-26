@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 // Import screens
 import '../../features/splash/presentation/screens/splash_screen.dart';
@@ -14,13 +15,22 @@ import '../../features/profile/presentation/screens/edit_profile_screen.dart';
 import '../../features/profile/presentation/screens/change_password_screen.dart';
 import '../../core/constants/app_constants.dart';
 import '../../features/authentication/data/services/auth_storage_service.dart';
+import '../providers/router_notifier.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
+  final routerNotifier = ref.watch(routerNotifierProvider);
+  
   return GoRouter(
     initialLocation: AppConstants.splashRoute,
-    redirect: (context, state) async {
+    refreshListenable: routerNotifier,
+    redirect: (context, state) {
+      final isAuthenticated = routerNotifier.isAuthenticated;
+      final currentLocation = state.matchedLocation;
+      
+      print('Router redirect: isAuthenticated=$isAuthenticated, currentLocation=$currentLocation');
+      
       // Allow splash screen to handle its own logic
-      if (state.matchedLocation == AppConstants.splashRoute) {
+      if (currentLocation == AppConstants.splashRoute) {
         return null;
       }
       
@@ -32,19 +42,22 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         AppConstants.forgotPasswordRoute,
       ];
       
-      if (allowedWithoutLogin.contains(state.matchedLocation)) {
+      if (allowedWithoutLogin.contains(currentLocation)) {
+        // If user is already authenticated and trying to access auth screens,
+        // redirect to home (except for specific cases like direct navigation)
+        if (isAuthenticated && currentLocation != AppConstants.signUpRoute) {
+          return AppConstants.homeRoute;
+        }
         return null;
       }
       
-      // For protected routes, check if user should persist login
-      final shouldPersist = await AuthStorageService.instance.shouldPersistLogin();
-      if (!shouldPersist) {
-        // If not logged in or Remember Me disabled, check if they've seen onboarding
-        final isFirstLaunch = await AuthStorageService.instance.isFirstLaunch();
-        return isFirstLaunch ? AppConstants.onboardingRoute : AppConstants.signInRoute;
+      // For protected routes, check authentication
+      if (!isAuthenticated) {
+        // Check if they've seen onboarding (only when not authenticated)
+        return AppConstants.signInRoute;
       }
       
-      // Allow access to protected routes if logged in
+      // Allow access to protected routes if authenticated
       return null;
     },
     routes: [

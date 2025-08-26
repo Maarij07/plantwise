@@ -39,15 +39,35 @@ final authNotifierProvider = StateNotifierProvider<AuthNotifier, AuthState>((ref
   );
 });
 
-// Current user provider
+// Current user provider - fetches fresh data from Firestore
 final currentUserProvider = StreamProvider<domain.User?>((ref) {
   final authRepository = ref.watch(authRepositoryProvider);
-  return authRepository.authStateChanges;
+  
+  // Transform the auth state changes stream to fetch fresh Firestore data
+  return authRepository.authStateChanges.asyncMap((user) async {
+    if (user == null) return null;
+    
+    // Fetch the latest user data from Firestore
+    try {
+      final freshUser = await authRepository.getCurrentUser();
+      return freshUser;
+    } catch (e) {
+      print('Error fetching fresh user data: $e');
+      // Fallback to the user from auth state if Firestore fails
+      return user;
+    }
+  });
 });
 
 // Auth state provider for UI
 final authStateProvider = Provider<AuthState>((ref) {
   return ref.watch(authNotifierProvider);
+});
+
+// Refresh user data provider - useful for forcing a manual refresh
+final refreshUserDataProvider = FutureProvider<domain.User?>((ref) async {
+  final authRepository = ref.watch(authRepositoryProvider);
+  return await authRepository.getCurrentUser();
 });
 
 class AuthNotifier extends StateNotifier<AuthState> {
@@ -153,12 +173,63 @@ class AuthNotifier extends StateNotifier<AuthState> {
     }
   }
 
+  Future<void> updateUser({
+    required String userId,
+    String? name,
+    String? email,
+    String? photoUrl,
+  }) async {
+    print('AuthNotifier: Starting user update for $userId');
+    state = const AuthState.loading();
+    try {
+      final updatedUser = await _authRepository.updateUser(
+        userId: userId,
+        name: name,
+        email: email,
+        photoUrl: photoUrl,
+      );
+      print('AuthNotifier: User update completed successfully');
+      // The auth state will be updated via the stream listener
+      // but we can manually update it here for immediate feedback
+      state = AuthState.authenticated(updatedUser);
+    } catch (e) {
+      print('AuthNotifier: User update error: $e');
+      state = AuthState.error(e.toString());
+    }
+  }
+
   Future<void> sendPasswordResetEmail({required String email}) async {
     state = const AuthState.loading();
     try {
       await _authRepository.sendPasswordResetEmail(email: email);
       state = const AuthState.passwordResetSent();
     } catch (e) {
+      state = AuthState.error(e.toString());
+    }
+  }
+
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    print('AuthNotifier: Starting password change');
+    state = const AuthState.loading();
+    try {
+      await _authRepository.changePassword(
+        currentPassword: currentPassword,
+        newPassword: newPassword,
+      );
+      print('AuthNotifier: Password changed successfully');
+      
+      // Get current user to maintain the authenticated state
+      final currentUser = await _authRepository.getCurrentUser();
+      if (currentUser != null) {
+        state = AuthState.authenticated(currentUser);
+      } else {
+        state = const AuthState.unauthenticated();
+      }
+    } catch (e) {
+      print('AuthNotifier: Password change error: $e');
       state = AuthState.error(e.toString());
     }
   }

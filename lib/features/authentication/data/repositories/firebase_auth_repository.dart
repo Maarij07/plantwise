@@ -100,6 +100,8 @@ class FirebaseAuthRepository implements AuthRepository {
   }
 
   String _getErrorMessage(FirebaseAuthException e) {
+    print('Firebase Auth Error: ${e.code} - ${e.message}');
+    
     switch (e.code) {
       case 'user-not-found':
         return 'No user found with this email address.';
@@ -119,7 +121,25 @@ class FirebaseAuthRepository implements AuthRepository {
         return 'Email/password accounts are not enabled.';
       case 'requires-recent-login':
         return 'This operation requires recent authentication. Please sign in again.';
+      case 'network-request-failed':
+        return 'Network error. Please check your internet connection and try again.';
+      case 'timeout':
+        return 'Request timed out. Please check your internet connection and try again.';
+      case 'unavailable':
+        return 'Service temporarily unavailable. Please try again later.';
+      case 'permission-denied':
+        return 'Permission denied. Please check your Firebase configuration.';
+      case 'invalid-api-key':
+        return 'Invalid API key. Please contact support.';
+      case 'app-not-authorized':
+        return 'App not authorized. Please contact support.';
       default:
+        // Handle other network-related errors
+        final message = e.message?.toLowerCase() ?? '';
+        if (message.contains('network') || message.contains('connection') || 
+            message.contains('timeout') || message.contains('dns')) {
+          return 'Network error. Please check your internet connection and try again.';
+        }
         return e.message ?? 'An unexpected error occurred.';
     }
   }

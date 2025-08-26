@@ -66,11 +66,10 @@ class _FoggyHeaderState extends State<FoggyHeader>
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isTablet = screenWidth > 600;
-    final cardHeight = isTablet ? 180.0 : 150.0;
     
     return Container(
       width: double.infinity,
-      height: cardHeight,
+      constraints: BoxConstraints(minHeight: isTablet ? 180 : 150),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,

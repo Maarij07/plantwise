@@ -101,9 +101,8 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
         },
         authenticated: (user) {
           print('SignInScreen: Auth state is authenticated for user: ${user.name}');
-          print('SignInScreen: Navigating to home route: ${AppConstants.homeRoute}');
-          // Navigate to home screen on successful authentication
-          context.go(AppConstants.homeRoute);
+          print('SignInScreen: Router will handle navigation automatically');
+          // Router will handle navigation automatically based on auth state
         },
         unauthenticated: () {
           print('SignInScreen: Auth state is unauthenticated');
