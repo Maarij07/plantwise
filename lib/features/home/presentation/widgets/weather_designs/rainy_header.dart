@@ -115,7 +115,7 @@ class _RainyHeaderState extends State<RainyHeader>
     
     return Container(
       width: double.infinity,
-      constraints: BoxConstraints(minHeight: isTablet ? 180 : 150),
+      height: cardHeight,
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,

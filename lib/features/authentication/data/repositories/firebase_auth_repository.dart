@@ -84,6 +84,86 @@ class FirebaseAuthRepository implements AuthRepository {
     }
   }
 
+  @override
+  Future<domain.User> updateUser({
+    required String userId,
+    String? name,
+    String? email,
+    String? photoUrl,
+  }) async {
+    try {
+      final user = _firebaseAuth.currentUser;
+      if (user == null) {
+        throw Exception('No user is currently signed in');
+      }
+
+      if (user.uid != userId) {
+        throw Exception('User ID mismatch');
+      }
+
+      // Update display name
+      if (name != null && name.isNotEmpty && user.displayName != name.trim()) {
+        await user.updateDisplayName(name.trim());
+      }
+
+      // Update email
+      if (email != null && email.isNotEmpty && user.email != email.trim()) {
+        await user.verifyBeforeUpdateEmail(email.trim());
+      }
+
+      // Update photo URL
+      if (photoUrl != null && user.photoURL != photoUrl) {
+        await user.updatePhotoURL(photoUrl);
+      }
+
+      // Reload user to get fresh data
+      await user.reload();
+      
+      final updatedUser = _mapFirebaseUserToDomain(_firebaseAuth.currentUser);
+      if (updatedUser != null) {
+        return updatedUser;
+      } else {
+        throw Exception('Failed to update user');
+      }
+    } on FirebaseAuthException catch (e) {
+      throw Exception(_getErrorMessage(e));
+    } catch (e) {
+      throw Exception('An unexpected error occurred: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    try {
+      final user = _firebaseAuth.currentUser;
+      if (user == null) {
+        throw Exception('No user is currently signed in');
+      }
+
+      if (user.email == null) {
+        throw Exception('User email is required for password change');
+      }
+
+      // Re-authenticate the user with current password
+      final credential = EmailAuthProvider.credential(
+        email: user.email!,
+        password: currentPassword,
+      );
+      
+      await user.reauthenticateWithCredential(credential);
+      
+      // Update to new password
+      await user.updatePassword(newPassword);
+    } on FirebaseAuthException catch (e) {
+      throw Exception(_getErrorMessage(e));
+    } catch (e) {
+      throw Exception('An unexpected error occurred: ${e.toString()}');
+    }
+  }
+
 
 
   domain.User? _mapFirebaseUserToDomain(User? firebaseUser) {

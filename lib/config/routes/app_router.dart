@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 
 // Import screens
 import '../../features/splash/presentation/screens/splash_screen.dart';
@@ -14,7 +13,6 @@ import '../../features/admin/presentation/screens/admin_screen.dart';
 import '../../features/profile/presentation/screens/edit_profile_screen.dart';
 import '../../features/profile/presentation/screens/change_password_screen.dart';
 import '../../core/constants/app_constants.dart';
-import '../../features/authentication/data/services/auth_storage_service.dart';
 import '../providers/router_notifier.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
