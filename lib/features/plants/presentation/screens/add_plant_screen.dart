@@ -524,9 +524,12 @@ class _AddPlantScreenState extends ConsumerState<AddPlantScreen> {
   }
 
   Future<void> _savePlant() async {
+    print('_savePlant called');
     if (!_formKey.currentState!.validate()) {
+      print('Form validation failed');
       return;
     }
+    print('Form validation passed');
 
     setState(() {
       _isLoading = true;
@@ -564,8 +567,11 @@ class _AddPlantScreenState extends ConsumerState<AddPlantScreen> {
         imageUrl: _selectedImage?.path, // For now, store local path
       );
 
+      print('Plant object created: ${plant.name}');
+      
       // Add the plant
       await ref.read(plantsProvider.notifier).addPlant(plant);
+      print('Plant added to provider successfully');
 
       if (mounted) {
         Navigator.of(context).pop();
@@ -575,8 +581,11 @@ class _AddPlantScreenState extends ConsumerState<AddPlantScreen> {
             backgroundColor: AppColors.success,
           ),
         );
+        print('Success message shown, navigated back');
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      print('Error adding plant: $e');
+      print('Stack trace: $stackTrace');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(

@@ -112,7 +112,7 @@ class _WeatherWelcomeHeaderState extends ConsumerState<WeatherWelcomeHeader>
     
     return Container(
       width: double.infinity,
-      height: isTablet ? 220 : 180,
+      height: isTablet ? 230 : 190,
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -243,7 +243,7 @@ class _WeatherWelcomeHeaderState extends ConsumerState<WeatherWelcomeHeader>
     
     return Container(
       width: double.infinity,
-      height: isTablet ? 220 : 180,
+      height: isTablet ? 230 : 190,
       decoration: BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,

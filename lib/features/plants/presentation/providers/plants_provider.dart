@@ -38,8 +38,15 @@ class PlantsNotifier extends StateNotifier<List<Plant>> {
   }
 
   Future<void> addPlant(Plant plant) async {
-    state = [...state, plant];
-    await _savePlants();
+    try {
+      print('Adding plant: ${plant.name} (ID: ${plant.id})');
+      state = [...state, plant];
+      await _savePlants();
+      print('Plant added successfully. Total plants: ${state.length}');
+    } catch (e) {
+      print('Error adding plant: $e');
+      rethrow;
+    }
   }
 
   Future<void> updatePlant(Plant updatedPlant) async {

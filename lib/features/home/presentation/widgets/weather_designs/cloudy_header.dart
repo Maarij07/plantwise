@@ -66,7 +66,7 @@ class _CloudyHeaderState extends State<CloudyHeader>
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isTablet = screenWidth > 600;
-    final cardHeight = isTablet ? 220.0 : 180.0;
+    final cardHeight = isTablet ? 230.0 : 190.0;
     
     return Container(
       width: double.infinity,

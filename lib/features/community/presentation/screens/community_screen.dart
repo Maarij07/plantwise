@@ -6,8 +6,10 @@ import '../../../../config/theme/app_theme.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../domain/models/community_post.dart';
 import '../../domain/models/group.dart';
+import '../../domain/models/expert.dart';
 import '../providers/community_provider.dart';
 import '../providers/groups_provider.dart';
+import '../providers/expert_provider.dart';
 import '../../../authentication/presentation/providers/auth_providers.dart' as auth;
 import 'comments_screen.dart';
 import 'create_post_screen.dart';
@@ -163,7 +165,7 @@ class _AnimatedGroupCardState extends State<_AnimatedGroupCard>
 }
 
 class _AnimatedExpertCard extends StatefulWidget {
-  final PlantExpert expert;
+  final Expert expert;
   final Duration animationDelay;
 
   const _AnimatedExpertCard({
@@ -267,11 +269,23 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen>
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isTablet = screenWidth > 600;
+    
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
-        title: const Text('Community'),
+        title: Text(
+          'Community',
+          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: Theme.of(context).colorScheme.primary,
+            fontSize: isTablet ? 28 : 24,
+          ),
+        ),
         automaticallyImplyLeading: false,
+        elevation: 0,
+        backgroundColor: Colors.transparent,
         actions: [
           IconButton(
             icon: const Icon(Icons.search),
@@ -614,17 +628,134 @@ class _GroupsTab extends ConsumerWidget {
   }
 }
 
-class _ExpertsTab extends StatelessWidget {
+class _ExpertsTab extends ConsumerWidget {
   const _ExpertsTab();
 
   @override
-  Widget build(BuildContext context) {
-    return ListView.builder(
-      padding: const EdgeInsets.all(AppConstants.paddingMedium),
-      itemCount: _sampleExperts.length,
-      itemBuilder: (context, index) => _AnimatedExpertCard(
-        expert: _sampleExperts[index],
-        animationDelay: Duration(milliseconds: index * 150),
+  Widget build(BuildContext context, WidgetRef ref) {
+    final expertsAsync = ref.watch(approvedExpertsStreamProvider);
+    
+    return expertsAsync.when(
+      data: (experts) {
+        if (experts.isEmpty) {
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.all(AppConstants.paddingLarge),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.person_search_outlined,
+                    size: 80,
+                    color: AppColors.grey400,
+                  ),
+                  SizedBox(height: 24),
+                  Text(
+                    'No Experts Yet',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.grey700,
+                    ),
+                  ),
+                  SizedBox(height: 12),
+                  Text(
+                    'Plant experts will appear here once they are approved!',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: AppColors.grey600,
+                      height: 1.4,
+                    ),
+                  ),
+                  SizedBox(height: 32),
+                  Text(
+                    '🌱 Get expert advice\n🌿 Learn from professionals\n🌸 Connect with specialists',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: AppColors.grey600,
+                      height: 1.6,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+        
+        return RefreshIndicator(
+          onRefresh: () async {
+            ref.invalidate(approvedExpertsStreamProvider);
+            await Future.delayed(const Duration(milliseconds: 500));
+          },
+          child: ListView.builder(
+            padding: const EdgeInsets.all(AppConstants.paddingMedium),
+            itemCount: experts.length,
+            itemBuilder: (context, index) => _AnimatedExpertCard(
+              expert: experts[index],
+              animationDelay: Duration(milliseconds: index * 150),
+            ),
+          ),
+        );
+      },
+      loading: () => const Center(
+        child: Padding(
+          padding: EdgeInsets.all(AppConstants.paddingLarge),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 16),
+              Text(
+                'Loading experts...',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: AppColors.grey600,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      error: (error, stack) => Center(
+        child: Padding(
+          padding: const EdgeInsets.all(AppConstants.paddingLarge),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.error_outline,
+                size: 64,
+                color: AppColors.error,
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Failed to load experts',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.grey700,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Error: $error',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  color: AppColors.grey600,
+                ),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: () {
+                  ref.invalidate(approvedExpertsStreamProvider);
+                },
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -1508,7 +1639,7 @@ class _RealGroupCard extends ConsumerWidget {
 }
 
 class _ExpertCard extends StatelessWidget {
-  final PlantExpert expert;
+  final Expert expert;
 
   const _ExpertCard({required this.expert});
 
@@ -1571,6 +1702,18 @@ class _ExpertCard extends StatelessWidget {
                       ),
                     ],
                   ),
+                  if (expert.credentials.isNotEmpty) ...[
+                    const SizedBox(height: 6),
+                    Text(
+                      expert.credentials.take(2).join(' • '),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColors.grey500,
+                        fontSize: 11,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -1730,23 +1873,7 @@ class CommunityGroup {
   });
 }
 
-class PlantExpert {
-  final String id;
-  final String name;
-  final String specialty;
-  final String? avatar;
-  final double rating;
-  final int followers;
-
-  PlantExpert({
-    required this.id,
-    required this.name,
-    required this.specialty,
-    this.avatar,
-    required this.rating,
-    required this.followers,
-  });
-}
+// PlantExpert class removed - using Expert model from domain instead
 
 // Sample data
 
@@ -1781,29 +1908,7 @@ final List<CommunityGroup> _sampleGroups = [
   ),
 ];
 
-final List<PlantExpert> _sampleExperts = [
-  PlantExpert(
-    id: '1',
-    name: 'Dr. Emily Plant',
-    specialty: 'Indoor Plant Care',
-    rating: 4.9,
-    followers: 15200,
-  ),
-  PlantExpert(
-    id: '2',
-    name: 'Green Thumb Gary',
-    specialty: 'Succulent Expert',
-    rating: 4.7,
-    followers: 8900,
-  ),
-  PlantExpert(
-    id: '3',
-    name: 'Botanical Beth',
-    specialty: 'Plant Diseases',
-    rating: 4.8,
-    followers: 12400,
-  ),
-];
+// Sample experts removed - now using dynamic data from database
 
 class _ModernActionButton extends StatelessWidget {
   final IconData icon;

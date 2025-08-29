@@ -11,6 +11,8 @@ import '../widgets/unified_avatar.dart';
 import '../../data/services/avatar_service.dart';
 import '../../../authentication/presentation/providers/auth_providers.dart';
 import '../providers/avatar_provider.dart';
+import '../providers/expert_application_provider.dart';
+import '../../domain/models/expert_application.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -316,25 +318,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                     subtitle: const Text('Update your account password'),
                     trailing: const Icon(Icons.chevron_right),
                     onTap: () => _showChangePasswordDialog(context),
-                  ),
-                  const Divider(height: 1),
-                  ListTile(
-                    leading: Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: const Icon(
-                        Icons.location_on_outlined,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                    title: const Text('Location'),
-                    subtitle: const Text('Set your location for local tips'),
-                    trailing: const Icon(Icons.chevron_right),
-                    onTap: () => _showLocationDialog(context),
                   ),
                 ],
               ),
@@ -1209,14 +1192,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
 }
 
 // Become Expert Wizard Widget
-class BecomeExpertWizard extends StatefulWidget {
+class BecomeExpertWizard extends ConsumerStatefulWidget {
   const BecomeExpertWizard({Key? key}) : super(key: key);
   
   @override
-  State<BecomeExpertWizard> createState() => _BecomeExpertWizardState();
+  ConsumerState<BecomeExpertWizard> createState() => _BecomeExpertWizardState();
 }
 
-class _BecomeExpertWizardState extends State<BecomeExpertWizard> {
+class _BecomeExpertWizardState extends ConsumerState<BecomeExpertWizard> {
   final PageController _pageController = PageController();
   int _currentStep = 0;
   final int _totalSteps = 4;
@@ -1301,9 +1284,10 @@ class _BecomeExpertWizardState extends State<BecomeExpertWizard> {
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isTablet = screenWidth > 600;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     
     return Scaffold(
-      backgroundColor: AppColors.background,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       appBar: AppBar(
         title: Text(
           'Become an Expert',
@@ -1385,10 +1369,10 @@ class _BecomeExpertWizardState extends State<BecomeExpertWizard> {
           Container(
             padding: EdgeInsets.all(isTablet ? 24 : 16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.surface,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: isDark ? Colors.black.withOpacity(0.3) : Colors.black.withOpacity(0.1),
                   blurRadius: 10,
                   offset: const Offset(0, -5),
                 ),
@@ -1512,7 +1496,7 @@ class _BecomeExpertWizardState extends State<BecomeExpertWizard> {
                       Text(
                         'Select the area where you have the most expertise',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: AppColors.grey600,
+                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
                           fontSize: isTablet ? 14 : 13,
                         ),
                       ),
@@ -1548,7 +1532,7 @@ class _BecomeExpertWizardState extends State<BecomeExpertWizard> {
                   decoration: BoxDecoration(
                     color: isSelected
                         ? const Color(0xFFFFD700).withOpacity(0.1)
-                        : Colors.white,
+                        : Theme.of(context).colorScheme.surface,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: isSelected
@@ -1660,7 +1644,7 @@ class _BecomeExpertWizardState extends State<BecomeExpertWizard> {
                       Text(
                         'How long have you been working with plants?',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: AppColors.grey600,
+                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
                           fontSize: isTablet ? 14 : 13,
                         ),
                       ),
@@ -1688,7 +1672,7 @@ class _BecomeExpertWizardState extends State<BecomeExpertWizard> {
                     decoration: BoxDecoration(
                       color: isSelected
                           ? const Color(0xFFFFD700).withOpacity(0.1)
-                          : Colors.white,
+                          : Theme.of(context).colorScheme.surface,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color: isSelected
@@ -1818,7 +1802,7 @@ class _BecomeExpertWizardState extends State<BecomeExpertWizard> {
                       Text(
                         'Share your plant journey and expertise',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: AppColors.grey600,
+                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
                           fontSize: isTablet ? 14 : 13,
                         ),
                       ),
@@ -1830,50 +1814,54 @@ class _BecomeExpertWizardState extends State<BecomeExpertWizard> {
           ),
           const SizedBox(height: 24),
           // Bio text field
-          Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: AppColors.grey200),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 8,
-                  spreadRadius: 0,
-                ),
-              ],
-            ),
-            child: TextField(
-              controller: _bioController,
-              maxLines: 8,
-              maxLength: 500,
-              decoration: InputDecoration(
-                hintText:
-                    'Tell us about your plant journey, areas of expertise, and what makes you passionate about plants...',
-                hintStyle: TextStyle(
-                  color: AppColors.grey500,
-                  fontSize: isTablet ? 14 : 13,
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-                contentPadding: EdgeInsets.all(isTablet ? 20 : 16),
-                counterStyle: TextStyle(
-                  color: AppColors.grey500,
-                  fontSize: isTablet ? 12 : 11,
+          TextField(
+            controller: _bioController,
+            maxLines: 8,
+            maxLength: 500,
+            decoration: InputDecoration(
+              hintText:
+                  'Tell us about your plant journey, areas of expertise, and what makes you passionate about plants...',
+              hintStyle: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                fontSize: isTablet ? 14 : 13,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
                 ),
               ),
-              style: TextStyle(
-                fontSize: isTablet ? 16 : 14,
-                height: 1.5,
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                ),
               ),
-              onChanged: (value) {
-                setState(() {
-                  _bio = value;
-                });
-              },
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(
+                  color: AppColors.primary,
+                  width: 2,
+                ),
+              ),
+              filled: true,
+              fillColor: Theme.of(context).colorScheme.surface,
+              contentPadding: EdgeInsets.all(isTablet ? 20 : 16),
+              counterStyle: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                fontSize: isTablet ? 12 : 11,
+              ),
             ),
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurface,
+              fontSize: isTablet ? 16 : 14,
+              height: 1.5,
+            ),
+            onChanged: (value) {
+              setState(() {
+                _bio = value;
+              });
+            },
           ),
           const SizedBox(height: 24),
           // Credentials section
@@ -1897,32 +1885,43 @@ class _BecomeExpertWizardState extends State<BecomeExpertWizard> {
           Row(
             children: [
               Expanded(
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: AppColors.grey200),
+                child: TextField(
+                  controller: _credentialController,
+                  decoration: InputDecoration(
+                    hintText: 'e.g., Certified Horticulturist',
+                    hintStyle: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                      fontSize: isTablet ? 14 : 13,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(
+                        color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                      ),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(
+                        color: Theme.of(context).colorScheme.outline.withOpacity(0.3),
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                      borderSide: BorderSide(
+                        color: AppColors.primary,
+                        width: 2,
+                      ),
+                    ),
+                    filled: true,
+                    fillColor: Theme.of(context).colorScheme.surface,
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: isTablet ? 16 : 12,
+                      vertical: isTablet ? 16 : 12,
+                    ),
                   ),
-                  child: TextField(
-                    controller: _credentialController,
-                    decoration: InputDecoration(
-                      hintText: 'e.g., Certified Horticulturist',
-                      hintStyle: TextStyle(
-                        color: AppColors.grey500,
-                        fontSize: isTablet ? 14 : 13,
-                      ),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(8),
-                        borderSide: BorderSide.none,
-                      ),
-                      contentPadding: EdgeInsets.symmetric(
-                        horizontal: isTablet ? 16 : 12,
-                        vertical: isTablet ? 16 : 12,
-                      ),
-                    ),
-                    style: TextStyle(
-                      fontSize: isTablet ? 16 : 14,
-                    ),
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface,
+                    fontSize: isTablet ? 16 : 14,
                   ),
                 ),
               ),
@@ -2183,7 +2182,7 @@ class _BecomeExpertWizardState extends State<BecomeExpertWizard> {
     return Container(
       padding: EdgeInsets.all(isTablet ? 16 : 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppColors.grey200),
         boxShadow: [
@@ -2325,7 +2324,7 @@ class _BecomeExpertWizardState extends State<BecomeExpertWizard> {
       Container(
         padding: EdgeInsets.all(isTablet ? 16 : 12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(color: AppColors.grey200),
           boxShadow: [
@@ -2403,8 +2402,84 @@ class _BecomeExpertWizardState extends State<BecomeExpertWizard> {
     ];
   }
 
-  void _submitApplication() {
-    // TODO: Implement actual submission logic
+  void _submitApplication() async {
+    final currentUserAsync = ref.read(currentUserProvider);
+    final currentUser = currentUserAsync.value;
+    
+    if (currentUser == null) {
+      _showErrorDialog('Authentication Error', 'Please sign in to submit your application.');
+      return;
+    }
+
+    // Show loading dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const CircularProgressIndicator(color: AppColors.primary),
+            const SizedBox(height: 16),
+            Text(
+              'Submitting your application...',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+          ],
+        ),
+      ),
+    );
+
+    try {
+      // Create expert application object
+      final expertApplication = ExpertApplication(
+        userId: currentUser.id,
+        userEmail: currentUser.email,
+        userName: currentUser.name,
+        specialty: _selectedSpecialty,
+        experience: _experience,
+        bio: _bioController.text.trim(),
+        credentials: List<String>.from(_credentials),
+        status: ExpertApplicationStatus.pending,
+      );
+
+      // Submit the application using the notifier
+      await ref.read(expertApplicationNotifierProvider.notifier).submitApplication(expertApplication);
+      
+      // Check if submission was successful
+      final submissionState = ref.read(expertApplicationNotifierProvider);
+      
+      // Close loading dialog
+      if (mounted) Navigator.of(context).pop();
+      
+      submissionState.when(
+        data: (applicationId) {
+          if (applicationId != null) {
+            _showSuccessDialog(applicationId);
+          } else {
+            _showErrorDialog('Submission Error', 'Failed to submit application. Please try again.');
+          }
+        },
+        loading: () {
+          // Still loading, should not reach here
+        },
+        error: (error, stackTrace) {
+          _showErrorDialog('Submission Error', error.toString());
+        },
+      );
+      
+    } catch (e) {
+      // Close loading dialog
+      if (mounted) Navigator.of(context).pop();
+      
+      _showErrorDialog('Submission Error', 'An unexpected error occurred: $e');
+    }
+  }
+
+  void _showSuccessDialog(String applicationId) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -2442,12 +2517,46 @@ class _BecomeExpertWizardState extends State<BecomeExpertWizard> {
             ),
           ],
         ),
-        content: const Text(
-          'Thank you for applying to become an expert! We\'ll review your application and get back to you within 3-5 business days.',
-          style: TextStyle(
-            height: 1.4,
-            fontSize: 14,
-          ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Thank you for applying to become an expert! We\'ll review your application and get back to you within 3-5 business days.',
+              style: TextStyle(
+                height: 1.4,
+                fontSize: 14,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppColors.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.info_outline,
+                    color: AppColors.primary,
+                    size: 16,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Application ID: ${applicationId.substring(0, 8)}...',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
         actions: [
           Row(
@@ -2498,6 +2607,77 @@ class _BecomeExpertWizardState extends State<BecomeExpertWizard> {
                 ),
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showErrorDialog(String title, String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: AppColors.error.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(
+                Icons.error_outline,
+                color: AppColors.error,
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          message,
+          style: const TextStyle(
+            height: 1.4,
+            fontSize: 14,
+          ),
+        ),
+        actions: [
+          Container(
+            decoration: BoxDecoration(
+              color: AppColors.error,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.transparent,
+                shadowColor: Colors.transparent,
+                elevation: 0,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
+                ),
+              ),
+              child: const Text(
+                'OK',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
           ),
         ],
       ),

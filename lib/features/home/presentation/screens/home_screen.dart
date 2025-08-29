@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../../config/theme/app_theme.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/constants/user_constants.dart';
 import '../../../../core/utils/time_greeting_utils.dart';
-import '../../../profile/presentation/screens/profile_screen.dart';
-import '../../../plants/presentation/screens/my_plants_screen.dart';
+import '../widgets/weather_welcome_header.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../../../community/presentation/screens/community_screen.dart';
 import '../../../notifications/presentation/screens/notifications_screen.dart';
-import '../widgets/weather_welcome_header.dart';
+import '../../../plants/presentation/screens/my_plants_screen.dart';
+import '../../../plants/presentation/screens/camera_plant_screen.dart';
+import '../../../profile/presentation/screens/profile_screen.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -1100,11 +1103,24 @@ class _DashboardTabState extends ConsumerState<_DashboardTab> with TickerProvide
   void _showQuickActionsMenu(BuildContext context) {
     showModalBottomSheet(
       context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
       builder: (context) => Container(
         padding: const EdgeInsets.all(20),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            // Handle bar
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.grey300,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 20),
             Text(
               'Quick Actions',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
@@ -1116,23 +1132,20 @@ class _DashboardTabState extends ConsumerState<_DashboardTab> with TickerProvide
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
                 _buildQuickActionButton(
-                  context, 'Add Plant', Icons.add_circle, () {}),
+                  context, 'Take Photo', Icons.camera_alt, () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const CameraPlantScreen(),
+                      ),
+                    );
+                  }),
                 _buildQuickActionButton(
-                  context, 'Water Plants', Icons.water_drop, () {}),
-                _buildQuickActionButton(
-                  context, 'Schedule', Icons.schedule, () {}),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _buildQuickActionButton(
-                  context, 'Take Photo', Icons.camera_alt, () {}),
-                _buildQuickActionButton(
-                  context, 'Calendar', Icons.calendar_month, () {}),
-                _buildQuickActionButton(
-                  context, 'Reminders', Icons.notifications, () {}),
+                  context, 'Water Plants', Icons.water_drop, () {
+                    Navigator.pop(context);
+                    _showWaterPlantsDialog(context);
+                  }),
               ],
             ),
             const SizedBox(height: 20),
@@ -1979,6 +1992,270 @@ class _DashboardTabState extends ConsumerState<_DashboardTab> with TickerProvide
               overflow: TextOverflow.ellipsis,
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  // Dialog methods for quick actions
+  void _showWaterPlantsDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.water_drop, color: AppColors.info),
+            const SizedBox(width: 8),
+            const Text('Water Plants'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Select plants to water:',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 16),
+            // Mock plant list
+            ListTile(
+              leading: CircleAvatar(
+                backgroundColor: AppColors.primary.withOpacity(0.1),
+                child: Icon(Icons.eco, color: AppColors.primary),
+              ),
+              title: const Text('Monstera Deliciosa'),
+              subtitle: const Text('Living Room • Needs water'),
+              trailing: Checkbox(
+                value: true,
+                onChanged: (value) {},
+              ),
+            ),
+            ListTile(
+              leading: CircleAvatar(
+                backgroundColor: AppColors.primary.withOpacity(0.1),
+                child: Icon(Icons.eco, color: AppColors.primary),
+              ),
+              title: const Text('Snake Plant'),
+              subtitle: const Text('Bedroom • Needs water'),
+              trailing: Checkbox(
+                value: true,
+                onChanged: (value) {},
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Plants watered successfully! 💧'),
+                  backgroundColor: AppColors.success,
+                ),
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.info,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Water Selected'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showRemindersDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.notifications, color: AppColors.primary),
+            const SizedBox(width: 8),
+            const Text('Reminders'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Upcoming plant care reminders:',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 16),
+            // Mock reminders list
+            ListTile(
+              leading: Icon(Icons.water_drop, color: AppColors.info),
+              title: const Text('Water Monstera'),
+              subtitle: const Text('Today at 9:00 AM'),
+            ),
+            ListTile(
+              leading: Icon(Icons.grass, color: AppColors.success),
+              title: const Text('Fertilize Snake Plant'),
+              subtitle: const Text('Tomorrow at 10:00 AM'),
+            ),
+            ListTile(
+              leading: Icon(Icons.visibility, color: AppColors.warning),
+              title: const Text('Health Check'),
+              subtitle: const Text('In 3 days'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              // TODO: Navigate to reminders screen
+            },
+            child: const Text('Manage Reminders'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showPlantCareDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.favorite, color: AppColors.error),
+            const SizedBox(width: 8),
+            const Text('Plant Care Tips'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Quick care tips for today:',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 16),
+            _buildCareTip(Icons.wb_sunny, 'Perfect lighting conditions today', AppColors.warning),
+            const SizedBox(height: 8),
+            _buildCareTip(Icons.water_drop, 'Morning is ideal for watering', AppColors.info),
+            const SizedBox(height: 8),
+            _buildCareTip(Icons.thermostat, 'Temperature is optimal for growth', AppColors.success),
+            const SizedBox(height: 8),
+            _buildCareTip(Icons.air, 'Good humidity levels detected', AppColors.primary),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              // TODO: Navigate to care guide
+            },
+            child: const Text('View Care Guide'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showHealthCheckDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Row(
+          children: [
+            Icon(Icons.visibility, color: AppColors.success),
+            const SizedBox(width: 8),
+            const Text('Plant Health Check'),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Recent health assessments:',
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            const SizedBox(height: 16),
+            // Mock health status
+            _buildHealthStatusTile('Monstera Deliciosa', 'Excellent', AppColors.success, Icons.favorite),
+            _buildHealthStatusTile('Snake Plant', 'Good', AppColors.primary, Icons.eco),
+            _buildHealthStatusTile('Fiddle Leaf Fig', 'Needs Attention', AppColors.warning, Icons.healing),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              // Navigate to My Plants tab
+              final homeScreen = context.findAncestorStateOfType<_HomeScreenState>();
+              homeScreen?._onTabTapped(1);
+            },
+            child: const Text('View All Plants'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCareTip(IconData icon, String text, Color color) {
+    return Row(
+      children: [
+        Icon(icon, color: color, size: 20),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            text,
+            style: const TextStyle(fontSize: 14),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildHealthStatusTile(String plantName, String status, Color color, IconData icon) {
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: CircleAvatar(
+        backgroundColor: color.withOpacity(0.1),
+        radius: 16,
+        child: Icon(icon, color: color, size: 16),
+      ),
+      title: Text(
+        plantName,
+        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+      ),
+      trailing: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+        decoration: BoxDecoration(
+          color: color.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Text(
+          status,
+          style: TextStyle(
+            color: color,
+            fontSize: 12,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
     );

@@ -79,7 +79,7 @@ class PermissionService {
             '🖼️ Save plant photos to gallery\n'
             '📱 Access your plant photo library',
         icon: Icons.camera_alt_outlined,
-        primaryColor: Theme.of(context).colorScheme.secondary,
+        primaryColor: Theme.of(context).colorScheme.primary,
       );
 
       if (!shouldRequest) return false;

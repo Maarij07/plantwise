@@ -90,6 +90,7 @@ class _MyPlantsScreenState extends ConsumerState<MyPlantsScreen>
 
 
   void _showAddPlantOptions(BuildContext context) {
+    print('_showAddPlantOptions called');
     showModalBottomSheet(
       context: context,
       shape: const RoundedRectangleBorder(
@@ -121,6 +122,7 @@ class _MyPlantsScreenState extends ConsumerState<MyPlantsScreen>
               title: const Text('Take Photo'),
               subtitle: const Text('Identify plant from photo'),
               onTap: () {
+                print('Take Photo option tapped');
                 Navigator.pop(context);
                 Navigator.of(context).push(
                   MaterialPageRoute(
@@ -134,12 +136,15 @@ class _MyPlantsScreenState extends ConsumerState<MyPlantsScreen>
               title: const Text('Add Manually'),
               subtitle: const Text('Enter plant details yourself'),
               onTap: () {
+                print('Add Manually option tapped');
                 Navigator.pop(context);
+                print('Navigating to AddPlantScreen...');
                 Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (context) => const AddPlantScreen(),
                   ),
                 );
+                print('Navigation call completed');
               },
             ),
           ],

@@ -12,6 +12,8 @@ import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/admin/presentation/screens/admin_screen.dart';
 import '../../features/profile/presentation/screens/edit_profile_screen.dart';
 import '../../features/profile/presentation/screens/change_password_screen.dart';
+import '../../features/plants/presentation/screens/camera_plant_screen.dart';
+import '../../features/plants/presentation/screens/my_plants_screen.dart';
 import '../../core/constants/app_constants.dart';
 import '../providers/router_notifier.dart';
 
@@ -112,6 +114,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/change-password',
         name: 'changePassword',
         builder: (context, state) => const ChangePasswordScreen(),
+      ),
+      
+      // Plants Routes
+      GoRoute(
+        path: '/camera-plant',
+        name: 'cameraPlant',
+        builder: (context, state) => const CameraPlantScreen(),
+      ),
+      GoRoute(
+        path: '/my-plants',
+        name: 'myPlants',
+        builder: (context, state) => const MyPlantsScreen(),
       ),
     ],
     errorBuilder: (context, state) => Scaffold(

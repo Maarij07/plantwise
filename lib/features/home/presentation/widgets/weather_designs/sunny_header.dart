@@ -95,7 +95,7 @@ class _SunnyHeaderState extends State<SunnyHeader>
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isTablet = screenWidth > 600;
-    final cardHeight = isTablet ? 180.0 : 150.0;
+    final cardHeight = isTablet ? 190.0 : 160.0;
     
     return Container(
       width: double.infinity,
