@@ -9,7 +9,9 @@ import '../providers/plants_provider.dart';
 import 'plant_detail_screen.dart'; // For PlantType color extension
 
 class AddPlantScreen extends ConsumerStatefulWidget {
-  const AddPlantScreen({super.key});
+  final File? preSelectedImage;
+  
+  const AddPlantScreen({super.key, this.preSelectedImage});
 
   @override
   ConsumerState<AddPlantScreen> createState() => _AddPlantScreenState();
@@ -32,6 +34,15 @@ class _AddPlantScreenState extends ConsumerState<AddPlantScreen> {
   bool _isLoading = false;
 
   final ImagePicker _imagePicker = ImagePicker();
+
+  @override
+  void initState() {
+    super.initState();
+    // Use pre-selected image from camera screen if provided
+    if (widget.preSelectedImage != null) {
+      _selectedImage = widget.preSelectedImage;
+    }
+  }
 
   @override
   void dispose() {
@@ -564,13 +575,13 @@ class _AddPlantScreenState extends ConsumerState<AddPlantScreen> {
         notes: _notesController.text.trim().isEmpty 
             ? null 
             : _notesController.text.trim(),
-        imageUrl: _selectedImage?.path, // For now, store local path
+        // imageUrl will be set by the Firebase service after Cloudinary upload
       );
 
       print('Plant object created: ${plant.name}');
       
-      // Add the plant
-      await ref.read(plantsProvider.notifier).addPlant(plant);
+      // Add the plant with image upload to Firebase/Cloudinary
+      await ref.read(plantsProvider.notifier).addPlant(plant, imageFile: _selectedImage);
       print('Plant added to provider successfully');
 
       if (mounted) {

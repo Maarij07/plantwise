@@ -45,5 +45,10 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<!-- Camera and Photo Library permissions for plant disease detection -->
+	<key>NSCameraUsageDescription</key>
+	<string>This app needs access to camera to take photos of plants for disease detection and identification.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>This app needs access to photo library to select plant images for disease detection and identification.</string>
 </dict>
 </plist>

@@ -6,9 +6,9 @@ import 'package:permission_handler/permission_handler.dart';
 import '../../../../config/theme/app_theme.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../domain/models/plant.dart';
-import '../providers/plants_provider.dart';
+import '../../domain/models/disease_detection.dart';
+import '../../data/services/disease_detection_service.dart';
 import 'add_plant_screen.dart';
-import 'plant_detail_screen.dart'; // For PlantType color extension
 
 class CameraPlantScreen extends ConsumerStatefulWidget {
   const CameraPlantScreen({super.key});
@@ -21,20 +21,36 @@ class _CameraPlantScreenState extends ConsumerState<CameraPlantScreen> {
   File? _capturedImage;
   bool _isLoading = false;
   bool _isAnalyzing = false;
-  PlantIdentificationResult? _identificationResult;
+  DiseaseDetectionResult? _detectionResult;
   
   final ImagePicker _imagePicker = ImagePicker();
+  final DiseaseDetectionService _diseaseService = DiseaseDetectionService.instance;
 
   @override
   void initState() {
     super.initState();
     _checkCameraPermission();
+    _initializeMLService();
   }
 
   Future<void> _checkCameraPermission() async {
     final permission = await Permission.camera.status;
     if (permission.isDenied) {
       await Permission.camera.request();
+    }
+  }
+
+  Future<void> _initializeMLService() async {
+    final success = await _diseaseService.initialize();
+    if (!success) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Failed to initialize disease detection. Some features may not work.'),
+            backgroundColor: AppColors.warning,
+          ),
+        );
+      }
     }
   }
 
@@ -68,8 +84,8 @@ class _CameraPlantScreenState extends ConsumerState<CameraPlantScreen> {
               // Analysis Section
               if (_isAnalyzing) 
                 _buildAnalyzingWidget()
-              else if (_identificationResult != null)
-                _buildIdentificationResult()
+              else if (_detectionResult != null)
+                _buildDetectionResults()
               else
                 _buildAnalysisActions(),
             ],
@@ -301,92 +317,6 @@ class _CameraPlantScreenState extends ConsumerState<CameraPlantScreen> {
     );
   }
 
-  Widget _buildIdentificationResult() {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(
-                  Icons.check_circle,
-                  color: AppColors.success,
-                  size: 24,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'Plant Identified!',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.success,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            
-            _buildResultItem(
-              'Name',
-              _identificationResult!.name,
-              Icons.eco,
-            ),
-            _buildResultItem(
-              'Scientific Name',
-              _identificationResult!.scientificName,
-              Icons.science,
-            ),
-            _buildResultItem(
-              'Type',
-              _identificationResult!.type.displayName,
-              _identificationResult!.type.icon,
-            ),
-            _buildResultItem(
-              'Confidence',
-              '${(_identificationResult!.confidence * 100).toInt()}%',
-              Icons.trending_up,
-            ),
-            
-            if (_identificationResult!.careNotes.isNotEmpty) ...[
-              const SizedBox(height: 16),
-              Text(
-                'Care Tips:',
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 8),
-              ..._identificationResult!.careNotes.map(
-                (note) => Padding(
-                  padding: const EdgeInsets.only(bottom: 4),
-                  child: Text(
-                    '• $note',
-                    style: Theme.of(context).textTheme.bodySmall,
-                  ),
-                ),
-              ),
-            ],
-            
-            const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: _addIdentifiedPlant,
-                icon: const Icon(Icons.add),
-                label: const Text('Add to My Plants'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   Widget _buildResultItem(String label, String value, IconData icon) {
     return Padding(
@@ -428,7 +358,7 @@ class _CameraPlantScreenState extends ConsumerState<CameraPlantScreen> {
       if (pickedFile != null) {
         setState(() {
           _capturedImage = File(pickedFile.path);
-          _identificationResult = null; // Reset previous results
+          _detectionResult = null; // Reset previous results
         });
       }
     } catch (e) {
@@ -453,13 +383,11 @@ class _CameraPlantScreenState extends ConsumerState<CameraPlantScreen> {
     });
 
     try {
-      // Simulate API call delay
-      await Future.delayed(const Duration(seconds: 3));
+      // Run disease detection using our ML service
+      final result = await _diseaseService.detectDiseases(_capturedImage!);
       
-      // Mock plant identification result
-      // In a real app, you would call a plant identification API here
       setState(() {
-        _identificationResult = _getMockIdentificationResult();
+        _detectionResult = result;
       });
       
     } catch (e) {
@@ -476,56 +404,283 @@ class _CameraPlantScreenState extends ConsumerState<CameraPlantScreen> {
     }
   }
 
-  PlantIdentificationResult _getMockIdentificationResult() {
-    // Mock result - in a real app, this would come from an API
-    final random = DateTime.now().millisecond % 3;
-    switch (random) {
-      case 0:
-        return PlantIdentificationResult(
-          name: 'Monstera Deliciosa',
-          scientificName: 'Monstera deliciosa',
-          type: PlantType.foliage,
-          confidence: 0.92,
-          careNotes: [
-            'Prefers bright, indirect light',
-            'Water when top inch of soil is dry',
-            'Loves humidity - mist regularly',
-            'Can grow up to 10 feet indoors',
+  Widget _buildDetectionResults() {
+    final result = _detectionResult!;
+    final hasDetections = result.detections.isNotEmpty;
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Row(
+              children: [
+                Icon(
+                  hasDetections ? Icons.warning : Icons.check_circle,
+                  color: hasDetections ? AppColors.warning : AppColors.success,
+                  size: 24,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    hasDetections ? 'Disease Detection Results' : 'Plant Looks Healthy!',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: hasDetections ? AppColors.warning : AppColors.success,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            
+            const SizedBox(height: 8),
+            Text(
+              'Processing time: ${result.processingTimeMs.toStringAsFixed(0)}ms',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: AppColors.grey600,
+              ),
+            ),
+            
+            const SizedBox(height: 16),
+            
+            if (hasDetections) ...[
+              ...result.detections.asMap().entries.map((entry) {
+                final index = entry.key;
+                final detection = entry.value;
+                return _buildDetectionItem(detection, index);
+              }),
+            ] else ...[
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.success.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: AppColors.success.withOpacity(0.3),
+                    width: 1,
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    Icon(
+                      Icons.eco,
+                      color: AppColors.success,
+                      size: 32,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Great news! No diseases detected in your plant.',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: AppColors.success,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            
+            const SizedBox(height: 20),
+            
+            // Action buttons
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: _retakePhoto,
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Scan Again'),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: _addManually,
+                    icon: const Icon(Icons.add),
+                    label: const Text('Add Plant'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ],
-        );
-      case 1:
-        return PlantIdentificationResult(
-          name: 'Snake Plant',
-          scientificName: 'Sansevieria trifasciata',
-          type: PlantType.succulent,
-          confidence: 0.89,
-          careNotes: [
-            'Very low maintenance',
-            'Tolerates low light conditions',
-            'Water sparingly - every 2-3 weeks',
-            'Perfect for beginners',
-          ],
-        );
-      default:
-        return PlantIdentificationResult(
-          name: 'Peace Lily',
-          scientificName: 'Spathiphyllum wallisii',
-          type: PlantType.flowering,
-          confidence: 0.85,
-          careNotes: [
-            'Prefers medium, indirect light',
-            'Keep soil consistently moist',
-            'Brown tips indicate low humidity',
-            'Beautiful white flowers when happy',
-          ],
-        );
-    }
+        ),
+      ),
+    );
   }
+
+  Widget _buildDetectionItem(DetectedDisease detection, int index) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: detection.severityLevel.level >= 3 
+            ? AppColors.error.withOpacity(0.1)
+            : AppColors.warning.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: detection.severityLevel.level >= 3 
+              ? AppColors.error.withOpacity(0.3)
+              : AppColors.warning.withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Disease name and confidence
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: detection.severityLevel.level >= 3 
+                      ? AppColors.error
+                      : AppColors.warning,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '#${index + 1}',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      detection.diseaseName,
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      detection.plantType,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColors.grey600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: detection.severityLevel.level >= 3 
+                      ? AppColors.error
+                      : AppColors.warning,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Text(
+                  detection.confidencePercentage,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          
+          const SizedBox(height: 12),
+          
+          // Severity and description
+          if (detection.description != null && detection.description!.isNotEmpty) ...[
+            Text(
+              detection.description!,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+            const SizedBox(height: 8),
+          ],
+          
+          // Severity indicator
+          Row(
+            children: [
+              Text(
+                'Severity: ',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: detection.severityLevel.level >= 3 
+                      ? AppColors.error.withOpacity(0.2)
+                      : AppColors.warning.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  detection.severityLevel.displayName,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    fontWeight: FontWeight.w500,
+                    color: detection.severityLevel.level >= 3 
+                        ? AppColors.error
+                        : AppColors.warning,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          
+          // Treatment suggestions
+          if (detection.treatmentSuggestions != null && detection.treatmentSuggestions!.isNotEmpty) ...[
+            const SizedBox(height: 12),
+            ExpansionTile(
+              tilePadding: EdgeInsets.zero,
+              childrenPadding: const EdgeInsets.only(left: 16, bottom: 8),
+              title: Text(
+                'Treatment Suggestions',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.primary,
+                ),
+              ),
+              children: detection.treatmentSuggestions!.map(
+                (suggestion) => Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text('• ', style: TextStyle(fontWeight: FontWeight.bold)),
+                      Expanded(
+                        child: Text(
+                          suggestion,
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ).toList(),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
 
   void _retakePhoto() {
     setState(() {
       _capturedImage = null;
-      _identificationResult = null;
+      _detectionResult = null;
     });
   }
 
@@ -533,63 +688,11 @@ class _CameraPlantScreenState extends ConsumerState<CameraPlantScreen> {
     // Navigate to manual add with the captured image
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
-        builder: (context) => AddPlantScreenWithImage(image: _capturedImage),
+        builder: (context) => AddPlantScreen(preSelectedImage: _capturedImage),
       ),
     );
   }
 
-  Future<void> _addIdentifiedPlant() async {
-    if (_identificationResult == null || _capturedImage == null) return;
-
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      final plant = Plant(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        name: _identificationResult!.name,
-        species: _identificationResult!.scientificName,
-        location: 'New Location', // User can edit this later
-        type: _identificationResult!.type,
-        dateAdded: DateTime.now(),
-        careSchedule: CareSchedule(
-          wateringIntervalDays: _getDefaultWateringInterval(_identificationResult!.type),
-          fertilizingIntervalDays: _getDefaultFertilizingInterval(_identificationResult!.type),
-          repottingIntervalMonths: 12,
-          careNotes: _identificationResult!.careNotes,
-        ),
-        healthStatus: HealthStatus.good,
-        imageUrl: _capturedImage!.path,
-        notes: 'Added via plant identification',
-      );
-
-      await ref.read(plantsProvider.notifier).addPlant(plant);
-
-      if (mounted) {
-        Navigator.of(context).pop(); // Return to plants screen
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('${plant.name} added successfully!'),
-            backgroundColor: AppColors.success,
-          ),
-        );
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error adding plant: $e'),
-          backgroundColor: AppColors.error,
-        ),
-      );
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
-  }
 
   int _getDefaultWateringInterval(PlantType type) {
     switch (type) {

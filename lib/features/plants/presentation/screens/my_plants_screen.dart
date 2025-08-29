@@ -62,9 +62,8 @@ class _MyPlantsScreenState extends ConsumerState<MyPlantsScreen>
 
   @override
   Widget build(BuildContext context) {
-    final plants = ref.watch(plantsProvider);
-    final plantsNeedingWater = ref.watch(plantsNeedingWaterProvider);
-    final filteredPlants = _getFilteredAndSortedPlants(plants);
+    final asyncPlants = ref.watch(plantsProvider);
+    final asyncPlantsNeedingWater = ref.watch(plantsNeedingWaterProvider);
     final screenWidth = MediaQuery.of(context).size.width;
     final isTablet = screenWidth > 600;
     final isLargeScreen = screenWidth > 1024;
@@ -76,11 +75,24 @@ class _MyPlantsScreenState extends ConsumerState<MyPlantsScreen>
         opacity: _fadeAnimation,
         child: SlideTransition(
           position: _slideAnimation,
-          child: filteredPlants.isEmpty && _searchQuery.isNotEmpty
-              ? _buildNoResultsState(context)
-              : plants.isEmpty
-                  ? _buildEnhancedEmptyState(context, isTablet)
-                  : _buildMainContent(context, plants, filteredPlants, plantsNeedingWater, isTablet, isLargeScreen),
+          child: asyncPlants.when(
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (error, stack) => _buildErrorState(context, error.toString()),
+            data: (plants) {
+              final filteredPlants = _getFilteredAndSortedPlants(plants);
+              if (filteredPlants.isEmpty && _searchQuery.isNotEmpty) {
+                return _buildNoResultsState(context);
+              }
+              if (plants.isEmpty) {
+                return _buildEnhancedEmptyState(context, isTablet);
+              }
+              return asyncPlantsNeedingWater.when(
+                loading: () => _buildMainContent(context, plants, filteredPlants, [], isTablet, isLargeScreen),
+                error: (error, stack) => _buildMainContent(context, plants, filteredPlants, [], isTablet, isLargeScreen),
+                data: (plantsNeedingWater) => _buildMainContent(context, plants, filteredPlants, plantsNeedingWater, isTablet, isLargeScreen),
+              );
+            },
+          ),
         ),
       ),
       floatingActionButton: _buildEnhancedFAB(context, isTablet),
@@ -347,6 +359,55 @@ extension _MyPlantsScreenMethods on _MyPlantsScreenState {
                   ),
                 ),
               ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Error State
+  Widget _buildErrorState(BuildContext context, String error) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 120,
+              height: 120,
+              decoration: BoxDecoration(
+                color: AppColors.error.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(60),
+              ),
+              child: const Icon(
+                Icons.error_outline,
+                size: 60,
+                color: AppColors.error,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Something went wrong',
+              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              error,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: AppColors.grey600,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: () {
+                // Retry loading plants
+              },
+              child: const Text('Retry'),
             ),
           ],
         ),

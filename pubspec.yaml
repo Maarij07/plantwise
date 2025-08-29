@@ -60,6 +60,12 @@ dependencies:
   # Image Handling
   image_picker: ^1.1.2
   cached_network_image: ^3.4.1
+  image: ^4.2.0
+  cloudinary_public: ^0.21.0
+  
+  # Machine Learning
+  onnxruntime: ^1.4.1  # ONNX runtime for model inference
+  camera: ^0.10.5+9
   
   # Local Storage
   shared_preferences: ^2.3.2
@@ -117,6 +123,7 @@ flutter:
     - assets/images/
     - assets/icons/
     - assets/data/
+    - assets/models/
 
   # To add custom fonts to your application, add a fonts section here,
   # in this "flutter" section. Each entry in this list should have a

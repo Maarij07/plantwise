@@ -1,188 +1,139 @@
-import 'dart:convert';
+import 'dart:io';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../domain/models/plant.dart';
+import '../../data/services/plants_firebase_service.dart';
 
-final plantsProvider = StateNotifierProvider<PlantsNotifier, List<Plant>>((ref) {
-  return PlantsNotifier();
+// Firebase service provider
+final plantsFirebaseServiceProvider = Provider<PlantsFirebaseService>((ref) {
+  return PlantsFirebaseService.instance;
 });
 
-class PlantsNotifier extends StateNotifier<List<Plant>> {
-  PlantsNotifier() : super([]) {
-    _loadPlants();
+// Stream provider for real-time plants data
+final plantsStreamProvider = StreamProvider<List<Plant>>((ref) {
+  final service = ref.watch(plantsFirebaseServiceProvider);
+  return service.getPlantsStream();
+});
+
+// State provider for managing plants
+final plantsProvider = StateNotifierProvider<PlantsNotifier, AsyncValue<List<Plant>>>((ref) {
+  return PlantsNotifier(ref.watch(plantsFirebaseServiceProvider));
+});
+
+class PlantsNotifier extends StateNotifier<AsyncValue<List<Plant>>> {
+  final PlantsFirebaseService _firebaseService;
+  
+  PlantsNotifier(this._firebaseService) : super(const AsyncValue.loading()) {
+    _initialize();
   }
 
-  static const String _plantsKey = 'plants';
-
-  Future<void> _loadPlants() async {
-    final prefs = await SharedPreferences.getInstance();
-    final plantsJson = prefs.getStringList(_plantsKey);
-    
-    if (plantsJson != null) {
-      state = plantsJson
-          .map((json) => Plant.fromJson(jsonDecode(json)))
-          .toList();
-    } else {
-      // Initialize with sample data
-      state = _getSamplePlants();
-      await _savePlants();
+  Future<void> _initialize() async {
+    try {
+      await _firebaseService.initialize();
+      await _firebaseService.createSamplePlantsIfNeeded();
+      await loadPlants();
+    } catch (error, stackTrace) {
+      state = AsyncValue.error(error, stackTrace);
     }
   }
 
-  Future<void> _savePlants() async {
-    final prefs = await SharedPreferences.getInstance();
-    final plantsJson = state
-        .map((plant) => jsonEncode(plant.toJson()))
-        .toList();
-    await prefs.setStringList(_plantsKey, plantsJson);
+  /// Load plants from Firebase
+  Future<void> loadPlants() async {
+    try {
+      state = const AsyncValue.loading();
+      final plants = await _firebaseService.getPlants();
+      state = AsyncValue.data(plants);
+    } catch (error, stackTrace) {
+      state = AsyncValue.error(error, stackTrace);
+    }
   }
 
-  Future<void> addPlant(Plant plant) async {
+  /// Add a new plant with optional image
+  Future<void> addPlant(Plant plant, {File? imageFile}) async {
     try {
-      print('Adding plant: ${plant.name} (ID: ${plant.id})');
-      state = [...state, plant];
-      await _savePlants();
-      print('Plant added successfully. Total plants: ${state.length}');
-    } catch (e) {
-      print('Error adding plant: $e');
+      await _firebaseService.addPlant(plant, imageFile: imageFile);
+      await loadPlants(); // Refresh the list
+    } catch (error) {
+      print('Error adding plant: $error');
       rethrow;
     }
   }
 
-  Future<void> updatePlant(Plant updatedPlant) async {
-    state = state.map((plant) {
-      if (plant.id == updatedPlant.id) {
-        return updatedPlant;
-      }
-      return plant;
-    }).toList();
-    await _savePlants();
+  /// Update an existing plant
+  Future<void> updatePlant(Plant plant, {File? newImageFile}) async {
+    try {
+      await _firebaseService.updatePlant(plant, newImageFile: newImageFile);
+      await loadPlants(); // Refresh the list
+    } catch (error) {
+      print('Error updating plant: $error');
+      rethrow;
+    }
   }
 
+  /// Remove a plant
   Future<void> removePlant(String plantId) async {
-    state = state.where((plant) => plant.id != plantId).toList();
-    await _savePlants();
+    try {
+      await _firebaseService.deletePlant(plantId);
+      await loadPlants(); // Refresh the list
+    } catch (error) {
+      print('Error removing plant: $error');
+      rethrow;
+    }
   }
 
+  /// Mark a plant as watered
   Future<void> waterPlant(String plantId) async {
-    final now = DateTime.now();
-    state = state.map((plant) {
-      if (plant.id == plantId) {
-        return plant.copyWith(lastWatered: now);
-      }
-      return plant;
-    }).toList();
-    await _savePlants();
+    try {
+      await _firebaseService.waterPlant(plantId);
+      await loadPlants(); // Refresh the list
+    } catch (error) {
+      print('Error watering plant: $error');
+      rethrow;
+    }
   }
 
+  /// Mark a plant as fertilized
   Future<void> fertilizePlant(String plantId) async {
-    final now = DateTime.now();
-    state = state.map((plant) {
-      if (plant.id == plantId) {
-        return plant.copyWith(lastFertilized: now);
-      }
-      return plant;
-    }).toList();
-    await _savePlants();
+    try {
+      await _firebaseService.fertilizePlant(plantId);
+      await loadPlants(); // Refresh the list
+    } catch (error) {
+      print('Error fertilizing plant: $error');
+      rethrow;
+    }
   }
 
-  List<Plant> getPlantsNeedingWater() {
-    final now = DateTime.now();
-    return state.where((plant) {
-      if (plant.lastWatered == null) return true;
-      final daysSinceWatered = now.difference(plant.lastWatered!).inDays;
-      return daysSinceWatered >= plant.careSchedule.wateringIntervalDays;
-    }).toList();
-  }
-
-  List<Plant> getPlantsNeedingFertilizer() {
-    final now = DateTime.now();
-    return state.where((plant) {
-      if (plant.lastFertilized == null) return true;
-      final daysSinceFertilized = now.difference(plant.lastFertilized!).inDays;
-      return daysSinceFertilized >= plant.careSchedule.fertilizingIntervalDays;
-    }).toList();
-  }
-
-  List<Plant> _getSamplePlants() {
-    final now = DateTime.now();
-    return [
-      Plant(
-        id: '1',
-        name: 'Monstera Deliciosa',
-        species: 'Monstera deliciosa',
-        location: 'Living Room',
-        type: PlantType.foliage,
-        dateAdded: now.subtract(const Duration(days: 30)),
-        careSchedule: const CareSchedule(
-          wateringIntervalDays: 7,
-          fertilizingIntervalDays: 30,
-          repottingIntervalMonths: 12,
-          careNotes: ['Prefers bright indirect light', 'Mist leaves regularly'],
-        ),
-        healthStatus: HealthStatus.excellent,
-        lastWatered: now.subtract(const Duration(days: 5)),
-        lastFertilized: now.subtract(const Duration(days: 15)),
-        notes: 'Growing beautifully with new fenestrations!',
-      ),
-      Plant(
-        id: '2',
-        name: 'Snake Plant',
-        species: 'Sansevieria trifasciata',
-        location: 'Bedroom',
-        type: PlantType.foliage,
-        dateAdded: now.subtract(const Duration(days: 60)),
-        careSchedule: const CareSchedule(
-          wateringIntervalDays: 14,
-          fertilizingIntervalDays: 60,
-          repottingIntervalMonths: 24,
-          careNotes: ['Very drought tolerant', 'Avoid overwatering'],
-        ),
-        healthStatus: HealthStatus.good,
-        lastWatered: now.subtract(const Duration(days: 10)),
-        lastFertilized: now.subtract(const Duration(days: 30)),
-        notes: 'Perfect for beginners!',
-      ),
-      Plant(
-        id: '3',
-        name: 'Fiddle Leaf Fig',
-        species: 'Ficus lyrata',
-        location: 'Office',
-        type: PlantType.tree,
-        dateAdded: now.subtract(const Duration(days: 90)),
-        careSchedule: const CareSchedule(
-          wateringIntervalDays: 7,
-          fertilizingIntervalDays: 21,
-          repottingIntervalMonths: 18,
-          careNotes: ['Needs bright indirect light', 'Don\'t move frequently'],
-        ),
-        healthStatus: HealthStatus.fair,
-        lastWatered: now.subtract(const Duration(days: 8)),
-        lastFertilized: now.subtract(const Duration(days: 25)),
-        notes: 'Needs attention - some brown spots appearing',
-      ),
-    ];
+  /// Update plant health status
+  Future<void> updatePlantHealth(String plantId, HealthStatus healthStatus) async {
+    try {
+      await _firebaseService.updatePlantHealth(plantId, healthStatus);
+      await loadPlants(); // Refresh the list
+    } catch (error) {
+      print('Error updating plant health: $error');
+      rethrow;
+    }
   }
 }
 
-// Computed providers
-final plantsNeedingWaterProvider = Provider<List<Plant>>((ref) {
-  final plantsNotifier = ref.watch(plantsProvider.notifier);
-  return plantsNotifier.getPlantsNeedingWater();
+// Computed providers for Firebase-based plants
+final plantsNeedingWaterProvider = FutureProvider<List<Plant>>((ref) async {
+  final service = ref.watch(plantsFirebaseServiceProvider);
+  return await service.getPlantsNeedingWater();
 });
 
-final plantsNeedingFertilizerProvider = Provider<List<Plant>>((ref) {
-  final plantsNotifier = ref.watch(plantsProvider.notifier);
-  return plantsNotifier.getPlantsNeedingFertilizer();
+final plantsNeedingFertilizerProvider = FutureProvider<List<Plant>>((ref) async {
+  final service = ref.watch(plantsFirebaseServiceProvider);
+  return await service.getPlantsNeedingFertilizer();
 });
 
 final plantsByTypeProvider = Provider<Map<PlantType, List<Plant>>>((ref) {
-  final plants = ref.watch(plantsProvider);
+  final asyncPlants = ref.watch(plantsProvider);
   final plantsByType = <PlantType, List<Plant>>{};
   
-  for (final plant in plants) {
-    plantsByType.putIfAbsent(plant.type, () => []).add(plant);
-  }
+  asyncPlants.whenData((plants) {
+    for (final plant in plants) {
+      plantsByType.putIfAbsent(plant.type, () => []).add(plant);
+    }
+  });
   
   return plantsByType;
 });
