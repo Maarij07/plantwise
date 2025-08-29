@@ -9,9 +9,8 @@ class CloudinaryService {
 
   // Cloudinary configuration
   static const String _cloudName = 'dvqrmyzbe';
-  static const String _uploadPreset = 'plantwise_uploads'; // You can create this in Cloudinary dashboard
   
-  late final CloudinaryPublic _cloudinary;
+  CloudinaryPublic? _cloudinary;
   bool _isInitialized = false;
 
   /// Initialize the Cloudinary service
@@ -19,12 +18,27 @@ class CloudinaryService {
     if (_isInitialized) return;
     
     try {
-      _cloudinary = CloudinaryPublic(_cloudName, _uploadPreset, cache: false);
-      _isInitialized = true;
-      print('✅ Cloudinary Service initialized successfully');
+      // Try different upload presets that might exist by default
+      final presets = ['ml_default', 'plantwise_uploads', 'unsigned_preset'];
+      
+      for (final preset in presets) {
+        try {
+          _cloudinary = CloudinaryPublic(_cloudName, preset, cache: false);
+          print('✅ Cloudinary Service initialized with preset: $preset');
+          _isInitialized = true;
+          return;
+        } catch (e) {
+          print('⚠️ Failed with preset $preset: $e');
+          continue;
+        }
+      }
+      
+      // If all presets fail, throw the error
+      throw Exception('All Cloudinary presets failed');
     } catch (e) {
       print('❌ Error initializing Cloudinary Service: $e');
-      rethrow;
+      _isInitialized = false;
+      // Don't rethrow - let it fallback to Firebase Storage
     }
   }
 
@@ -39,10 +53,14 @@ class CloudinaryService {
       await initialize();
     }
 
+    if (_cloudinary == null) {
+      throw Exception('Cloudinary not initialized properly');
+    }
+    
     try {
       print('📤 Uploading image to Cloudinary...');
       
-      final response = await _cloudinary.uploadFile(
+      final response = await _cloudinary!.uploadFile(
         CloudinaryFile.fromFile(
           imageFile.path,
           publicId: publicId,

@@ -58,12 +58,6 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
       final email = _emailController.text.trim();
       final password = _passwordController.text;
       
-      // Check for admin credentials first
-      if (email == AppConstants.adminEmail && password == AppConstants.adminPassword) {
-        context.go(AppConstants.adminRoute);
-        return;
-      }
-      
       // Show informational message if permissions were denied
       if (!permissionsGranted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -231,50 +225,6 @@ class _SignInScreenState extends ConsumerState<SignInScreen> {
                   isLoading: authState.maybeWhen(
                     loading: () => true,
                     orElse: () => false,
-                  ),
-                ),
-                const SizedBox(height: AppConstants.paddingLarge),
-
-                // Admin Login Helper
-                Container(
-                  padding: const EdgeInsets.all(AppConstants.paddingMedium),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primary.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(AppConstants.borderRadius),
-                    border: Border.all(
-                      color: theme.colorScheme.primary.withOpacity(0.3),
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.info_outline,
-                            size: 16,
-                            color: theme.colorScheme.primary,
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            'Demo Admin Login',
-                            style: theme.textTheme.titleSmall?.copyWith(
-                              color: theme.colorScheme.primary,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Email: ${AppConstants.adminEmail}',
-                        style: theme.textTheme.bodySmall,
-                      ),
-                      Text(
-                        'Password: ${AppConstants.adminPassword}',
-                        style: theme.textTheme.bodySmall,
-                      ),
-                    ],
                   ),
                 ),
                 const SizedBox(height: AppConstants.paddingLarge),

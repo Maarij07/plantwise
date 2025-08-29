@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import '../../../../core/services/cloudinary_service.dart';
 import '../../domain/models/plant.dart';
 
@@ -29,27 +30,52 @@ class PlantsFirebaseService {
     print('✅ Plants Firebase Service initialized');
   }
 
-  /// Add a new plant with image upload to Cloudinary
+  /// Add a new plant with image upload to Cloudinary (with Firebase Storage fallback)
   Future<Plant> addPlant(Plant plant, {File? imageFile}) async {
     try {
       String? imageUrl;
       
-      // Upload image to Cloudinary if provided
+      // Upload image if provided
       if (imageFile != null) {
-        print('📤 Uploading plant image to Cloudinary...');
-        imageUrl = await _cloudinaryService.uploadImage(
-          imageFile,
-          publicId: 'plant_${plant.id}',
-          folder: 'plants',
-          tags: ['plant', plant.type.name, plant.species.toLowerCase().replaceAll(' ', '_')],
-        );
+        try {
+          print('📤 Trying to upload plant image to Cloudinary...');
+          imageUrl = await _cloudinaryService.uploadImage(
+            imageFile,
+            publicId: 'plant_${plant.id}',
+            folder: 'plants',
+            tags: ['plant', plant.type.name, plant.species.toLowerCase().replaceAll(' ', '_')],
+          );
+          print('✅ Cloudinary upload successful');
+        } catch (cloudinaryError) {
+          print('⚠️ Cloudinary upload failed: $cloudinaryError');
+          print('🔄 Falling back to Firebase Storage...');
+          
+          try {
+            // Fallback to Firebase Storage
+            final storageRef = FirebaseStorage.instance
+                .ref()
+                .child('plants')
+                .child('${plant.id}.jpg');
+            
+            final uploadTask = await storageRef.putFile(imageFile);
+            imageUrl = await uploadTask.ref.getDownloadURL();
+            print('✅ Firebase Storage upload successful');
+          } catch (storageError) {
+            print('❌ Firebase Storage also failed: $storageError');
+            print('📝 Saving plant without image...');
+            // Continue without image
+          }
+        }
       }
 
-      // Create plant with Cloudinary URL
+      // Create plant with image URL (or null if upload failed)
       final plantWithImage = plant.copyWith(imageUrl: imageUrl);
 
-      // Save to Firebase
-      await _plantsCollection.doc(plant.id).set(plantWithImage.toJson());
+      // Save to Firestore with manual JSON conversion
+      final plantJson = plantWithImage.toJson();
+      // Ensure careSchedule is properly serialized
+      plantJson['careSchedule'] = plantWithImage.careSchedule.toJson();
+      await _plantsCollection.doc(plant.id).set(plantJson);
       
       print('✅ Plant added to Firebase: ${plant.name}');
       return plantWithImage;
@@ -76,8 +102,11 @@ class PlantsFirebaseService {
         updatedPlant = plant.copyWith(imageUrl: imageUrl);
       }
 
-      // Update in Firebase
-      await _plantsCollection.doc(plant.id).update(updatedPlant.toJson());
+      // Update in Firebase with manual JSON conversion
+      final plantJson = updatedPlant.toJson();
+      // Ensure careSchedule is properly serialized
+      plantJson['careSchedule'] = updatedPlant.careSchedule.toJson();
+      await _plantsCollection.doc(plant.id).update(plantJson);
       
       print('✅ Plant updated in Firebase: ${plant.name}');
       return updatedPlant;
@@ -249,7 +278,10 @@ class PlantsFirebaseService {
       final samplePlants = _getSamplePlants();
       
       for (final plant in samplePlants) {
-        await _plantsCollection.doc(plant.id).set(plant.toJson());
+        final plantJson = plant.toJson();
+        // Ensure careSchedule is properly serialized
+        plantJson['careSchedule'] = plant.careSchedule.toJson();
+        await _plantsCollection.doc(plant.id).set(plantJson);
       }
       
       print('✅ Sample plants created successfully');

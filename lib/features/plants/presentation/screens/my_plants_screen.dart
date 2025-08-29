@@ -1,8 +1,10 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../config/theme/app_theme.dart';
 import '../../../../core/constants/app_constants.dart';
+import '../../../../core/services/plant_image_service.dart';
 import '../../domain/models/plant.dart';
 import '../providers/plants_provider.dart';
 import 'plant_detail_screen.dart';
@@ -1433,9 +1435,7 @@ class _EnhancedPlantCard extends StatelessWidget {
                       ),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(16),
-                        child: plant.imageUrl != null
-                            ? _buildPlantImage()
-                            : _buildPlantIcon(),
+                        child: _buildPlantImage(),
                       ),
                     ),
                     
@@ -1652,15 +1652,29 @@ class _EnhancedPlantCard extends StatelessWidget {
   }
   
   Widget _buildPlantImage() {
-    final imageUrl = plant.imageUrl!;
+    // Get optimized image URL using the PlantImageService
+    final imageUrl = PlantImageService.instance.getPlantImageUrl(
+      plant,
+      size: ImageSize.card,
+    );
     
     if (imageUrl.startsWith('http')) {
-      return Image.network(
-        imageUrl,
+      return CachedNetworkImage(
+        imageUrl: imageUrl,
         fit: BoxFit.cover,
         width: double.infinity,
         height: double.infinity,
-        errorBuilder: (context, error, stackTrace) => _buildPlantIcon(),
+        placeholder: (context, url) => Container(
+          color: AppColors.grey200,
+          child: Center(
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(
+                AppColors.primary.withOpacity(0.5),
+              ),
+            ),
+          ),
+        ),
+        errorWidget: (context, url, error) => _buildPlantIcon(),
       );
     } else {
       try {
@@ -1908,15 +1922,29 @@ class _EnhancedPlantListItem extends StatelessWidget {
   }
   
   Widget _buildPlantImage() {
-    final imageUrl = plant.imageUrl!;
+    // Get optimized image URL using the PlantImageService
+    final imageUrl = PlantImageService.instance.getPlantImageUrl(
+      plant,
+      size: ImageSize.thumbnail,
+    );
     
     if (imageUrl.startsWith('http')) {
-      return Image.network(
-        imageUrl,
+      return CachedNetworkImage(
+        imageUrl: imageUrl,
         fit: BoxFit.cover,
         width: double.infinity,
         height: double.infinity,
-        errorBuilder: (context, error, stackTrace) => _buildPlantIcon(),
+        placeholder: (context, url) => Container(
+          color: AppColors.grey200,
+          child: Center(
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(
+                AppColors.primary.withOpacity(0.5),
+              ),
+            ),
+          ),
+        ),
+        errorWidget: (context, url, error) => _buildPlantIcon(),
       );
     } else {
       try {
