@@ -59,10 +59,10 @@ class DiseaseDetectionService {
       print('🔧 Model inputs: ${_session!.inputNames}');
       print('🔧 Model outputs: ${_session!.outputNames}');
     } catch (e) {
-      // If model file doesn't exist or fails to load, fall back to simulation
-      print('⚠️ Could not load ONNX model: $e');
-      print('📱 Using simulation mode instead - place your .onnx model at $modelPath for real inference');
-      _session = null; // Ensure session is null for simulation mode
+      // Throw error instead of falling back to simulation since user has the model
+      print('❌ Failed to load ONNX model: $e');
+      print('🔍 Model path: $modelPath');
+      throw Exception('Could not load ONNX model from assets: $e. Make sure the model file exists at $modelPath');
     }
   }
 
@@ -222,6 +222,8 @@ class DiseaseDetectionService {
     }
 
     try {
+      print('🔄 Starting ONNX inference...');
+      
       // Convert input for ONNX - YOLOv8 expects [batch, channels, height, width] format
       final inputData = Float32List(1 * 3 * inputSize * inputSize);
       int outputIndex = 0;
@@ -242,6 +244,9 @@ class DiseaseDetectionService {
         [1, 3, inputSize, inputSize],
       );
       
+      print('📊 Input tensor created with shape: [1, 3, $inputSize, $inputSize]');
+      print('🔗 Running inference on input: ${_session!.inputNames.first}');
+      
       // Run inference
       final runOptions = OrtRunOptions();
       final outputs = _session!.run(
@@ -259,23 +264,93 @@ class DiseaseDetectionService {
         throw Exception('Invalid output tensor');
       }
       
-      // Get tensor data and shape using proper API
-      final outputData = outputTensor.value as List;
+      // Get tensor data and handle proper type conversion
+      final outputData = outputTensor.value;
+      print('🔍 ONNX output data type: ${outputData.runtimeType}');
+      print('🔍 ONNX output data length: ${outputData is List ? outputData.length : 'N/A'}');
+      
       // For ONNX runtime, we need to infer shape from model or use known shape
       // YOLOv8 typically outputs shape [1, 33, 8400]
       final outputShape = [1, 33, 8400];
       
-      // Convert output data to List<double>
+      // Convert output data to List<double> with comprehensive type handling
       final outputList = <double>[];
-      if (outputData is List<double>) {
-        outputList.addAll(outputData);
-      } else if (outputData is Float32List) {
-        outputList.addAll(outputData.toList());
-      } else {
-        // Convert other numeric types
-        for (var item in outputData) {
-          outputList.add((item as num).toDouble());
+      
+      try {
+        if (outputData is List<double>) {
+          print('✅ Output is List<double>');
+          outputList.addAll(outputData);
+        } else if (outputData is Float32List) {
+          print('✅ Output is Float32List');
+          outputList.addAll(outputData.toList());
+        } else if (outputData is List<List<double>>) {
+          print('✅ Output is List<List<double>> - flattening...');
+          // Handle nested list structure - flatten it
+          for (final sublist in outputData) {
+            outputList.addAll(sublist);
+          }
+        } else if (outputData is List<List<num>>) {
+          print('✅ Output is List<List<num>> - converting and flattening...');
+          // Handle nested list structure with num types
+          for (final sublist in outputData) {
+            for (final item in sublist) {
+              outputList.add(item.toDouble());
+            }
+          }
+        } else if (outputData is List) {
+          print('✅ Output is generic List - processing items...');
+          // Convert other numeric types with safer casting
+          for (int i = 0; i < outputData.length; i++) {
+            final item = outputData[i];
+            print('🔍 Item $i type: ${item.runtimeType}');
+            
+            if (item is double) {
+              outputList.add(item);
+            } else if (item is int) {
+              outputList.add(item.toDouble());
+            } else if (item is num) {
+              outputList.add(item.toDouble());
+            } else if (item is List) {
+              print('🔍 Processing nested list of length: ${item.length}');
+              // Handle nested structure
+              for (int j = 0; j < item.length; j++) {
+                final subItem = item[j];
+                if (subItem is double) {
+                  outputList.add(subItem);
+                } else if (subItem is int) {
+                  outputList.add(subItem.toDouble());
+                } else if (subItem is num) {
+                  outputList.add(subItem.toDouble());
+                } else {
+                  print('⚠️ Unknown subitem type: ${subItem.runtimeType}');
+                  // Try dynamic conversion as last resort
+                  try {
+                    final doubleVal = double.parse(subItem.toString());
+                    outputList.add(doubleVal);
+                  } catch (e) {
+                    print('❌ Failed to convert subitem to double: $e');
+                  }
+                }
+              }
+            } else {
+              print('⚠️ Unknown item type: ${item.runtimeType}');
+              // Try dynamic conversion as last resort
+              try {
+                final doubleVal = double.parse(item.toString());
+                outputList.add(doubleVal);
+              } catch (e) {
+                print('❌ Failed to convert item to double: $e');
+              }
+            }
+          }
+        } else {
+          throw Exception('Unsupported output data type: ${outputData.runtimeType}');
         }
+        
+        print('✅ Successfully converted ${outputList.length} values to List<double>');
+        
+      } catch (e) {
+        throw Exception('Error converting ONNX output data: $e');
       }
       
       // Reshape output to [anchors, classes + 4]

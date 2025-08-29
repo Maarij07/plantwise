@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../../config/theme/app_theme.dart';
 import '../../../../core/constants/app_constants.dart';
+import '../../../../core/providers/care_streak_providers.dart';
+import '../../../plants/presentation/providers/plants_provider.dart';
 import '../providers/land_size_provider.dart';
 import '../widgets/land_size_setup_dialog.dart';
 import '../widgets/bitmoji_avatar.dart';
@@ -148,123 +150,176 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
             
             const SizedBox(height: 24),
 
-            // Quick Stats Section
-            Row(
-              children: [
-                Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: AppColors.success.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: AppColors.success.withOpacity(0.2),
-                        width: 1,
+            // Quick Stats Section - Real Data
+            Consumer(
+              builder: (context, ref, child) {
+                final plantsAsync = ref.watch(plantsProvider);
+                final plantsNeedingWaterAsync = ref.watch(plantsNeedingWaterProvider);
+                final dashboardStatsAsync = ref.watch(dashboardStatsProvider);
+                
+                return dashboardStatsAsync.when(
+                  data: (stats) => Row(
+                    children: [
+                      Expanded(
+                        child: Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: AppColors.success.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: AppColors.success.withOpacity(0.2),
+                              width: 1,
+                            ),
+                          ),
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.eco,
+                                color: AppColors.success,
+                                size: 28,
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                stats.totalPlants.toString(),
+                                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.success,
+                                ),
+                              ),
+                              Text(
+                                'Plants',
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: AppColors.success,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
-                    ),
-                    child: Column(
-                      children: [
-                        Icon(
-                          Icons.eco,
-                          color: AppColors.success,
-                          size: 28,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          '15',
-                          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.success,
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: AppColors.warning.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: AppColors.warning.withOpacity(0.2),
+                              width: 1,
+                            ),
+                          ),
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.water_drop,
+                                color: AppColors.warning,
+                                size: 28,
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                stats.plantsNeedingWater.toString(),
+                                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.warning,
+                                ),
+                              ),
+                              Text(
+                                'Need Water',
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: AppColors.warning,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        Text(
-                          'Plants',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.success,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: AppColors.warning.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: AppColors.warning.withOpacity(0.2),
-                        width: 1,
                       ),
-                    ),
-                    child: Column(
-                      children: [
-                        Icon(
-                          Icons.schedule,
-                          color: AppColors.warning,
-                          size: 28,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          '3',
-                          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.warning,
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: AppColors.primary.withOpacity(0.2),
+                              width: 1,
+                            ),
+                          ),
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.favorite,
+                                color: AppColors.primary,
+                                size: 28,
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                stats.healthScorePercentage,
+                                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                              Text(
+                                'Health Score',
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: AppColors.primary,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        Text(
-                          'Due Today',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.warning,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: AppColors.primary.withOpacity(0.2),
-                        width: 1,
                       ),
-                    ),
-                    child: Column(
-                      children: [
-                        Icon(
-                          Icons.trending_up,
-                          color: AppColors.primary,
-                          size: 28,
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          '89%',
-                          style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.primary,
-                          ),
-                        ),
-                        Text(
-                          'Care Rate',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: AppColors.primary,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    ),
+                    ],
                   ),
-                ),
-              ],
+                  loading: () => Row(
+                    children: [
+                      Expanded(child: _buildStatCardSkeleton()),
+                      const SizedBox(width: 12),
+                      Expanded(child: _buildStatCardSkeleton()),
+                      const SizedBox(width: 12),
+                      Expanded(child: _buildStatCardSkeleton()),
+                    ],
+                  ),
+                  error: (error, stack) => Row(
+                    children: [
+                      Expanded(
+                        child: Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: AppColors.error.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: AppColors.error.withOpacity(0.2),
+                              width: 1,
+                            ),
+                          ),
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.error_outline,
+                                color: AppColors.error,
+                                size: 28,
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Error',
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: AppColors.error,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              },
             ),
 
             const SizedBox(height: 24),
@@ -737,13 +792,37 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
                         color: AppColors.success,
                       ),
                       const SizedBox(width: 4),
-                      Text(
-                        '15 Plants Growing',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: AppColors.success,
-                          fontWeight: FontWeight.w500,
-                          fontSize: isTablet ? 14 : 12,
-                        ),
+                      Consumer(
+                        builder: (context, ref, child) {
+                          final plantsAsync = ref.watch(plantsProvider);
+                          
+                          return plantsAsync.when(
+                            data: (plants) => Text(
+                              '${plants.length} Plants Growing',
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: AppColors.success,
+                                fontWeight: FontWeight.w500,
+                                fontSize: isTablet ? 14 : 12,
+                              ),
+                            ),
+                            loading: () => Container(
+                              width: 80,
+                              height: 12,
+                              decoration: BoxDecoration(
+                                color: AppColors.grey300,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                            ),
+                            error: (error, stack) => Text(
+                              'Loading plants...',
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: AppColors.grey600,
+                                fontWeight: FontWeight.w500,
+                                fontSize: isTablet ? 14 : 12,
+                              ),
+                            ),
+                          );
+                        },
                       ),
                     ],
                   ),
@@ -1175,6 +1254,47 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen>
               }
             },
             child: const Text('Sign Out'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Skeleton loading widget for stat cards
+  Widget _buildStatCardSkeleton() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.grey200,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: 28,
+            height: 28,
+            decoration: BoxDecoration(
+              color: AppColors.grey300,
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            width: 40,
+            height: 24,
+            decoration: BoxDecoration(
+              color: AppColors.grey300,
+              borderRadius: BorderRadius.circular(4),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Container(
+            width: 60,
+            height: 16,
+            decoration: BoxDecoration(
+              color: AppColors.grey300,
+              borderRadius: BorderRadius.circular(4),
+            ),
           ),
         ],
       ),

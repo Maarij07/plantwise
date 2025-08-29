@@ -5,12 +5,16 @@ import '../../../../config/theme/app_theme.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/constants/user_constants.dart';
 import '../../../../core/utils/time_greeting_utils.dart';
+import '../../../../core/providers/care_streak_providers.dart';
+import '../../../../core/services/care_streak_service.dart';
 import '../widgets/weather_welcome_header.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../../../community/presentation/screens/community_screen.dart';
 import '../../../notifications/presentation/screens/notifications_screen.dart';
 import '../../../plants/presentation/screens/my_plants_screen.dart';
 import '../../../plants/presentation/screens/camera_plant_screen.dart';
+import '../../../plants/domain/models/plant.dart';
+import '../../../plants/presentation/providers/plants_provider.dart';
 import '../../../profile/presentation/screens/profile_screen.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
@@ -1202,159 +1206,346 @@ class _DashboardTabState extends ConsumerState<_DashboardTab> with TickerProvide
     final isTablet = screenWidth > 600;
     final isLargeScreen = screenWidth > 1024;
     
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              'Garden Overview',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-                fontSize: isTablet ? 22 : 18,
-              ),
-            ),
-            TextButton(
-              onPressed: () {},
-              child: Text(
-                'View All',
-                style: TextStyle(fontSize: isTablet ? 16 : 14),
-              ),
-            ),
-          ],
-        ),
-        SizedBox(height: isTablet ? 20 : 16),
-        // Stats grid - responsive layout
-        isLargeScreen 
-            ? Column(
+    return Consumer(
+      builder: (context, ref, child) {
+        final dashboardStatsAsync = ref.watch(dashboardStatsProvider);
+        
+        return dashboardStatsAsync.when(
+          data: (stats) => Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildEnhancedStatCard(
-                          context,
-                          title: 'Total Plants',
-                          value: '15',
-                          progress: 0.75,
-                          icon: Icons.eco,
-                          color: AppColors.success,
-                          trend: '+3 this month',
-                          isPositive: true,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: _buildEnhancedStatCard(
-                          context,
-                          title: 'Need Water',
-                          value: '3',
-                          progress: 0.3,
-                          icon: Icons.water_drop,
-                          color: AppColors.info,
-                          trend: '-1 from yesterday',
-                          isPositive: true,
-                        ),
-                      ),
-                    ],
+                  Text(
+                    'Garden Overview',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      fontSize: isTablet ? 22 : 18,
+                    ),
                   ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildEnhancedStatCard(
-                          context,
-                          title: 'Health Score',
-                          value: '89%',
-                          progress: 0.89,
-                          icon: Icons.favorite,
-                          color: AppColors.primary,
-                          trend: '+5% this week',
-                          isPositive: true,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: _buildEnhancedStatCard(
-                          context,
-                          title: 'Care Streak',
-                          value: '7d',
-                          progress: 0.7,
-                          icon: Icons.local_fire_department,
-                          color: AppColors.warning,
-                          trend: 'Keep it up!',
-                          isPositive: true,
-                        ),
-                      ),
-                    ],
-                  ),
-                ],
-              )
-            : Column(
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildEnhancedStatCard(
-                          context,
-                          title: 'Total Plants',
-                          value: '15',
-                          progress: 0.75,
-                          icon: Icons.eco,
-                          color: AppColors.success,
-                          trend: '+3 this month',
-                          isPositive: true,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _buildEnhancedStatCard(
-                          context,
-                          title: 'Need Water',
-                          value: '3',
-                          progress: 0.3,
-                          icon: Icons.water_drop,
-                          color: AppColors.info,
-                          trend: '-1 from yesterday',
-                          isPositive: true,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: _buildEnhancedStatCard(
-                          context,
-                          title: 'Health Score',
-                          value: '89%',
-                          progress: 0.89,
-                          icon: Icons.favorite,
-                          color: AppColors.primary,
-                          trend: '+5% this week',
-                          isPositive: true,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: _buildEnhancedStatCard(
-                          context,
-                          title: 'Care Streak',
-                          value: '7d',
-                          progress: 0.7,
-                          icon: Icons.local_fire_department,
-                          color: AppColors.warning,
-                          trend: 'Keep it up!',
-                          isPositive: true,
-                        ),
-                      ),
-                    ],
+                  TextButton(
+                    onPressed: () {},
+                    child: Text(
+                      'View All',
+                      style: TextStyle(fontSize: isTablet ? 16 : 14),
+                    ),
                   ),
                 ],
               ),
-        SizedBox(height: isTablet ? 32 : 24),
-      ],
+              SizedBox(height: isTablet ? 20 : 16),
+              // Stats grid - responsive layout
+              isLargeScreen 
+                  ? Column(
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildEnhancedStatCard(
+                                context,
+                                title: 'Total Plants',
+                                value: stats.totalPlants.toString(),
+                                progress: (stats.totalPlants / 20).clamp(0.0, 1.0), // Progress out of 20 max plants
+                                icon: Icons.eco,
+                                color: AppColors.success,
+                                trend: 'Growing strong',
+                                isPositive: true,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: _buildEnhancedStatCard(
+                                context,
+                                title: 'Need Water',
+                                value: stats.plantsNeedingWater.toString(),
+                                progress: stats.totalPlants > 0 
+                                    ? (stats.plantsNeedingWater / stats.totalPlants).clamp(0.0, 1.0)
+                                    : 0.0,
+                                icon: Icons.water_drop,
+                                color: AppColors.info,
+                                trend: stats.plantsNeedingWater == 0 ? 'All watered!' : 'Needs attention',
+                                isPositive: stats.plantsNeedingWater == 0,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildEnhancedStatCard(
+                                context,
+                                title: 'Health Score',
+                                value: stats.healthScorePercentage,
+                                progress: stats.overallHealthScore / 100,
+                                icon: Icons.favorite,
+                                color: AppColors.primary,
+                                trend: stats.healthStatusDescription,
+                                isPositive: stats.overallHealthScore >= 75,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: _buildEnhancedStatCard(
+                                context,
+                                title: 'Care Streak',
+                                value: stats.streakDescription,
+                                progress: (stats.careStreak / 30).clamp(0.0, 1.0), // Progress out of 30 days max
+                                icon: Icons.local_fire_department,
+                                color: AppColors.warning,
+                                trend: stats.careStreak > 0 ? 'Keep it up!' : 'Start caring!',
+                                isPositive: stats.careStreak > 0,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    )
+                  : Column(
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildEnhancedStatCard(
+                                context,
+                                title: 'Total Plants',
+                                value: stats.totalPlants.toString(),
+                                progress: (stats.totalPlants / 20).clamp(0.0, 1.0),
+                                icon: Icons.eco,
+                                color: AppColors.success,
+                                trend: 'Growing strong',
+                                isPositive: true,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _buildEnhancedStatCard(
+                                context,
+                                title: 'Need Water',
+                                value: stats.plantsNeedingWater.toString(),
+                                progress: stats.totalPlants > 0 
+                                    ? (stats.plantsNeedingWater / stats.totalPlants).clamp(0.0, 1.0)
+                                    : 0.0,
+                                icon: Icons.water_drop,
+                                color: AppColors.info,
+                                trend: stats.plantsNeedingWater == 0 ? 'All watered!' : 'Needs attention',
+                                isPositive: stats.plantsNeedingWater == 0,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildEnhancedStatCard(
+                                context,
+                                title: 'Health Score',
+                                value: stats.healthScorePercentage,
+                                progress: stats.overallHealthScore / 100,
+                                icon: Icons.favorite,
+                                color: AppColors.primary,
+                                trend: stats.healthStatusDescription,
+                                isPositive: stats.overallHealthScore >= 75,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _buildEnhancedStatCard(
+                                context,
+                                title: 'Care Streak',
+                                value: stats.streakDescription,
+                                progress: (stats.careStreak / 30).clamp(0.0, 1.0),
+                                icon: Icons.local_fire_department,
+                                color: AppColors.warning,
+                                trend: stats.careStreak > 0 ? 'Keep it up!' : 'Start caring!',
+                                isPositive: stats.careStreak > 0,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+              SizedBox(height: isTablet ? 32 : 24),
+            ],
+          ),
+          loading: () => Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Garden Overview',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      fontSize: isTablet ? 22 : 18,
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () {},
+                    child: Text(
+                      'View All',
+                      style: TextStyle(fontSize: isTablet ? 16 : 14),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: isTablet ? 20 : 16),
+              // Loading skeleton
+              _buildStatsLoadingSkeleton(isLargeScreen),
+              SizedBox(height: isTablet ? 32 : 24),
+            ],
+          ),
+          error: (error, stack) => Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'Garden Overview',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      fontSize: isTablet ? 22 : 18,
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () {},
+                    child: Text(
+                      'View All',
+                      style: TextStyle(fontSize: isTablet ? 16 : 14),
+                    ),
+                  ),
+                ],
+              ),
+              SizedBox(height: isTablet ? 20 : 16),
+              // Error state
+              Center(
+                child: Column(
+                  children: [
+                    Icon(Icons.error_outline, size: 48, color: AppColors.error),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Failed to load garden stats',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: AppColors.grey600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: isTablet ? 32 : 24),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  // Loading skeleton for stats section
+  Widget _buildStatsLoadingSkeleton(bool isLargeScreen) {
+    return isLargeScreen
+        ? Column(
+            children: [
+              Row(
+                children: [
+                  Expanded(child: _buildSkeletonCard()),
+                  const SizedBox(width: 16),
+                  Expanded(child: _buildSkeletonCard()),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(child: _buildSkeletonCard()),
+                  const SizedBox(width: 16),
+                  Expanded(child: _buildSkeletonCard()),
+                ],
+              ),
+            ],
+          )
+        : Column(
+            children: [
+              Row(
+                children: [
+                  Expanded(child: _buildSkeletonCard()),
+                  const SizedBox(width: 12),
+                  Expanded(child: _buildSkeletonCard()),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(child: _buildSkeletonCard()),
+                  const SizedBox(width: 12),
+                  Expanded(child: _buildSkeletonCard()),
+                ],
+              ),
+            ],
+          );
+  }
+
+  Widget _buildSkeletonCard() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppColors.grey200,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: AppColors.grey300,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              Container(
+                width: 30,
+                height: 30,
+                decoration: BoxDecoration(
+                  color: AppColors.grey300,
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Container(
+            width: 60,
+            height: 24,
+            decoration: BoxDecoration(
+              color: AppColors.grey300,
+              borderRadius: BorderRadius.circular(4),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Container(
+            width: 80,
+            height: 16,
+            decoration: BoxDecoration(
+              color: AppColors.grey300,
+              borderRadius: BorderRadius.circular(4),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            width: 100,
+            height: 12,
+            decoration: BoxDecoration(
+              color: AppColors.grey300,
+              borderRadius: BorderRadius.circular(4),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
