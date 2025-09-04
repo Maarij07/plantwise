@@ -125,7 +125,7 @@ class _MyPlantsScreenState extends ConsumerState<MyPlantsScreen>
             ),
             const SizedBox(height: 20),
             Text(
-              'Add New Plant',
+              'Detect Plant Disease',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
@@ -134,7 +134,7 @@ class _MyPlantsScreenState extends ConsumerState<MyPlantsScreen>
             ListTile(
               leading: const Icon(Icons.add_photo_alternate, color: AppColors.primary),
               title: const Text('Take Photo'),
-              subtitle: const Text('Identify plant from photo'),
+              subtitle: const Text('Identify plant disease from photo'),
               onTap: () {
                 print('Take Photo option tapped');
                 Navigator.pop(context);
@@ -344,7 +344,7 @@ extension _MyPlantsScreenMethods on _MyPlantsScreenState {
                     onPressed: () => _showAddPlantOptions(context),
                     icon: Icon(Icons.add, size: isTablet ? 24 : 20),
                     label: Text(
-                      'Add Plant',
+                      'Detect Plant',
                       style: TextStyle(fontSize: isTablet ? 18 : 16),
                     ),
                     style: ElevatedButton.styleFrom(
@@ -558,7 +558,7 @@ extension _MyPlantsScreenMethods on _MyPlantsScreenState {
         size: isTablet ? 24 : 20,
       ),
       label: Text(
-        'Add Plant',
+        'Detect Plant',
         style: TextStyle(
           fontSize: isTablet ? 16 : 14,
           fontWeight: FontWeight.w600,

@@ -12,19 +12,17 @@ _$PlantImpl _$$PlantImplFromJson(Map<String, dynamic> json) => _$PlantImpl(
       species: json['species'] as String,
       location: json['location'] as String,
       type: $enumDecode(_$PlantTypeEnumMap, json['type']),
-      dateAdded: DateTime.parse(json['dateAdded'] as String),
+      dateAdded: const TimestampConverter().fromJson(json['dateAdded']),
       careSchedule:
           CareSchedule.fromJson(json['careSchedule'] as Map<String, dynamic>),
       imageUrl: json['imageUrl'] as String?,
       notes: json['notes'] as String?,
       healthStatus:
           $enumDecodeNullable(_$HealthStatusEnumMap, json['healthStatus']),
-      lastWatered: json['lastWatered'] == null
-          ? null
-          : DateTime.parse(json['lastWatered'] as String),
-      lastFertilized: json['lastFertilized'] == null
-          ? null
-          : DateTime.parse(json['lastFertilized'] as String),
+      lastWatered:
+          const NullableTimestampConverter().fromJson(json['lastWatered']),
+      lastFertilized:
+          const NullableTimestampConverter().fromJson(json['lastFertilized']),
     );
 
 Map<String, dynamic> _$$PlantImplToJson(_$PlantImpl instance) =>
@@ -34,13 +32,15 @@ Map<String, dynamic> _$$PlantImplToJson(_$PlantImpl instance) =>
       'species': instance.species,
       'location': instance.location,
       'type': _$PlantTypeEnumMap[instance.type]!,
-      'dateAdded': instance.dateAdded.toIso8601String(),
+      'dateAdded': const TimestampConverter().toJson(instance.dateAdded),
       'careSchedule': instance.careSchedule,
       'imageUrl': instance.imageUrl,
       'notes': instance.notes,
       'healthStatus': _$HealthStatusEnumMap[instance.healthStatus],
-      'lastWatered': instance.lastWatered?.toIso8601String(),
-      'lastFertilized': instance.lastFertilized?.toIso8601String(),
+      'lastWatered':
+          const NullableTimestampConverter().toJson(instance.lastWatered),
+      'lastFertilized':
+          const NullableTimestampConverter().toJson(instance.lastFertilized),
     };
 
 const _$PlantTypeEnumMap = {

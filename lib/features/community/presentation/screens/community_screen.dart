@@ -338,19 +338,21 @@ class _CommunityScreenState extends ConsumerState<CommunityScreen>
       case 1: // Groups tab
         return FloatingActionButton(
           onPressed: () => _showGroupOptions(context),
-          backgroundColor: AppColors.secondary,
+          backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
           child: const Icon(Icons.group_add),
         );
       case 0: // Feed tab
-      case 2: // Experts tab
-      default:
         return FloatingActionButton(
           onPressed: () => _createPost(context),
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
           child: const Icon(Icons.add),
         );
+      case 2: // Experts tab
+      default:
+        // No FAB for experts tab
+        return const SizedBox.shrink();
     }
   }
   

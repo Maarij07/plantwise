@@ -58,9 +58,13 @@ class _CameraPlantScreenState extends ConsumerState<CameraPlantScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Identify Plant'),
+        title: const Text(
+          'Identify Plant Disease',
+          style: TextStyle(color: Colors.white),
+        ),
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(AppConstants.paddingMedium),
@@ -275,7 +279,7 @@ class _CameraPlantScreenState extends ConsumerState<CameraPlantScreen> {
             icon: const Icon(Icons.search),
             label: const Text('Identify Plant'),
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.secondary,
+              backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 16),
               textStyle: const TextStyle(
@@ -407,6 +411,10 @@ class _CameraPlantScreenState extends ConsumerState<CameraPlantScreen> {
   Widget _buildDetectionResults() {
     final result = _detectionResult!;
     final hasDetections = result.detections.isNotEmpty;
+    
+    // Check if this is a "not a plant" detection
+    final isNotPlant = hasDetections && 
+        result.detections.first.diseaseClass == 'Not a plant';
 
     return Card(
       child: Padding(
@@ -418,17 +426,33 @@ class _CameraPlantScreenState extends ConsumerState<CameraPlantScreen> {
             Row(
               children: [
                 Icon(
-                  hasDetections ? Icons.warning : Icons.check_circle,
-                  color: hasDetections ? AppColors.warning : AppColors.success,
+                  isNotPlant 
+                      ? Icons.info_outline
+                      : hasDetections 
+                          ? Icons.warning 
+                          : Icons.check_circle,
+                  color: isNotPlant 
+                      ? AppColors.info
+                      : hasDetections 
+                          ? AppColors.warning 
+                          : AppColors.success,
                   size: 24,
                 ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    hasDetections ? 'Disease Detection Results' : 'Plant Looks Healthy!',
+                    isNotPlant 
+                        ? 'Not a Plant Image'
+                        : hasDetections 
+                            ? 'Disease Detection Results' 
+                            : 'Plant Looks Healthy!',
                     style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: hasDetections ? AppColors.warning : AppColors.success,
+                      color: isNotPlant 
+                          ? AppColors.info
+                          : hasDetections 
+                              ? AppColors.warning 
+                              : AppColors.success,
                     ),
                   ),
                 ),
@@ -445,7 +469,45 @@ class _CameraPlantScreenState extends ConsumerState<CameraPlantScreen> {
             
             const SizedBox(height: 16),
             
-            if (hasDetections) ...[
+            if (isNotPlant) ...[
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.info.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(
+                    color: AppColors.info.withOpacity(0.3),
+                    width: 1,
+                  ),
+                ),
+                child: Column(
+                  children: [
+                    Icon(
+                      Icons.image_not_supported,
+                      color: AppColors.info,
+                      size: 32,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'This image doesn\'t appear to contain plant material.',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: AppColors.info,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Please take a photo of plant leaves, flowers, or stems for disease analysis.',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColors.grey600,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
+              ),
+            ] else if (hasDetections) ...[
               ...result.detections.asMap().entries.map((entry) {
                 final index = entry.key;
                 final detection = entry.value;
@@ -520,18 +582,24 @@ class _CameraPlantScreenState extends ConsumerState<CameraPlantScreen> {
   }
 
   Widget _buildDetectionItem(DetectedDisease detection, int index) {
+    final isNotPlant = detection.diseaseClass == 'Not a plant';
+    
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: detection.severityLevel.level >= 3 
-            ? AppColors.error.withOpacity(0.1)
-            : AppColors.warning.withOpacity(0.1),
+        color: isNotPlant 
+            ? AppColors.info.withOpacity(0.1)
+            : detection.severityLevel.level >= 3 
+                ? AppColors.error.withOpacity(0.1)
+                : AppColors.warning.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: detection.severityLevel.level >= 3 
-              ? AppColors.error.withOpacity(0.3)
-              : AppColors.warning.withOpacity(0.3),
+          color: isNotPlant 
+              ? AppColors.info.withOpacity(0.3)
+              : detection.severityLevel.level >= 3 
+                  ? AppColors.error.withOpacity(0.3)
+                  : AppColors.warning.withOpacity(0.3),
           width: 1,
         ),
       ),

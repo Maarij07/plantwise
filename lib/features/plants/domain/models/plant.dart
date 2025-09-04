@@ -1,8 +1,48 @@
 import 'package:flutter/material.dart';
 import 'package:freezed_annotation/freezed_annotation.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 part 'plant.freezed.dart';
 part 'plant.g.dart';
+
+// Custom converter for Firestore Timestamp
+class TimestampConverter implements JsonConverter<DateTime, dynamic> {
+  const TimestampConverter();
+
+  @override
+  DateTime fromJson(dynamic json) {
+    if (json is Timestamp) {
+      return json.toDate();
+    } else if (json is String) {
+      return DateTime.parse(json);
+    } else {
+      throw ArgumentError('Cannot convert $json to DateTime');
+    }
+  }
+
+  @override
+  dynamic toJson(DateTime dateTime) => dateTime.toIso8601String();
+}
+
+// Nullable version of the converter
+class NullableTimestampConverter implements JsonConverter<DateTime?, dynamic> {
+  const NullableTimestampConverter();
+
+  @override
+  DateTime? fromJson(dynamic json) {
+    if (json == null) return null;
+    if (json is Timestamp) {
+      return json.toDate();
+    } else if (json is String) {
+      return DateTime.parse(json);
+    } else {
+      throw ArgumentError('Cannot convert $json to DateTime');
+    }
+  }
+
+  @override
+  dynamic toJson(DateTime? dateTime) => dateTime?.toIso8601String();
+}
 
 @freezed
 class Plant with _$Plant {
@@ -12,13 +52,13 @@ class Plant with _$Plant {
     required String species,
     required String location,
     required PlantType type,
-    required DateTime dateAdded,
+    @TimestampConverter() required DateTime dateAdded,
     required CareSchedule careSchedule,
     String? imageUrl,
     String? notes,
     HealthStatus? healthStatus,
-    DateTime? lastWatered,
-    DateTime? lastFertilized,
+    @NullableTimestampConverter() DateTime? lastWatered,
+    @NullableTimestampConverter() DateTime? lastFertilized,
   }) = _Plant;
 
   factory Plant.fromJson(Map<String, dynamic> json) => _$PlantFromJson(json);

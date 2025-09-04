@@ -25,12 +25,15 @@ mixin _$Plant {
   String get species => throw _privateConstructorUsedError;
   String get location => throw _privateConstructorUsedError;
   PlantType get type => throw _privateConstructorUsedError;
+  @TimestampConverter()
   DateTime get dateAdded => throw _privateConstructorUsedError;
   CareSchedule get careSchedule => throw _privateConstructorUsedError;
   String? get imageUrl => throw _privateConstructorUsedError;
   String? get notes => throw _privateConstructorUsedError;
   HealthStatus? get healthStatus => throw _privateConstructorUsedError;
+  @NullableTimestampConverter()
   DateTime? get lastWatered => throw _privateConstructorUsedError;
+  @NullableTimestampConverter()
   DateTime? get lastFertilized => throw _privateConstructorUsedError;
 
   /// Serializes this Plant to a JSON map.
@@ -53,13 +56,13 @@ abstract class $PlantCopyWith<$Res> {
       String species,
       String location,
       PlantType type,
-      DateTime dateAdded,
+      @TimestampConverter() DateTime dateAdded,
       CareSchedule careSchedule,
       String? imageUrl,
       String? notes,
       HealthStatus? healthStatus,
-      DateTime? lastWatered,
-      DateTime? lastFertilized});
+      @NullableTimestampConverter() DateTime? lastWatered,
+      @NullableTimestampConverter() DateTime? lastFertilized});
 
   $CareScheduleCopyWith<$Res> get careSchedule;
 }
@@ -168,13 +171,13 @@ abstract class _$$PlantImplCopyWith<$Res> implements $PlantCopyWith<$Res> {
       String species,
       String location,
       PlantType type,
-      DateTime dateAdded,
+      @TimestampConverter() DateTime dateAdded,
       CareSchedule careSchedule,
       String? imageUrl,
       String? notes,
       HealthStatus? healthStatus,
-      DateTime? lastWatered,
-      DateTime? lastFertilized});
+      @NullableTimestampConverter() DateTime? lastWatered,
+      @NullableTimestampConverter() DateTime? lastFertilized});
 
   @override
   $CareScheduleCopyWith<$Res> get careSchedule;
@@ -268,13 +271,13 @@ class _$PlantImpl implements _Plant {
       required this.species,
       required this.location,
       required this.type,
-      required this.dateAdded,
+      @TimestampConverter() required this.dateAdded,
       required this.careSchedule,
       this.imageUrl,
       this.notes,
       this.healthStatus,
-      this.lastWatered,
-      this.lastFertilized});
+      @NullableTimestampConverter() this.lastWatered,
+      @NullableTimestampConverter() this.lastFertilized});
 
   factory _$PlantImpl.fromJson(Map<String, dynamic> json) =>
       _$$PlantImplFromJson(json);
@@ -290,6 +293,7 @@ class _$PlantImpl implements _Plant {
   @override
   final PlantType type;
   @override
+  @TimestampConverter()
   final DateTime dateAdded;
   @override
   final CareSchedule careSchedule;
@@ -300,8 +304,10 @@ class _$PlantImpl implements _Plant {
   @override
   final HealthStatus? healthStatus;
   @override
+  @NullableTimestampConverter()
   final DateTime? lastWatered;
   @override
+  @NullableTimestampConverter()
   final DateTime? lastFertilized;
 
   @override
@@ -370,18 +376,19 @@ class _$PlantImpl implements _Plant {
 
 abstract class _Plant implements Plant {
   const factory _Plant(
-      {required final String id,
-      required final String name,
-      required final String species,
-      required final String location,
-      required final PlantType type,
-      required final DateTime dateAdded,
-      required final CareSchedule careSchedule,
-      final String? imageUrl,
-      final String? notes,
-      final HealthStatus? healthStatus,
-      final DateTime? lastWatered,
-      final DateTime? lastFertilized}) = _$PlantImpl;
+          {required final String id,
+          required final String name,
+          required final String species,
+          required final String location,
+          required final PlantType type,
+          @TimestampConverter() required final DateTime dateAdded,
+          required final CareSchedule careSchedule,
+          final String? imageUrl,
+          final String? notes,
+          final HealthStatus? healthStatus,
+          @NullableTimestampConverter() final DateTime? lastWatered,
+          @NullableTimestampConverter() final DateTime? lastFertilized}) =
+      _$PlantImpl;
 
   factory _Plant.fromJson(Map<String, dynamic> json) = _$PlantImpl.fromJson;
 
@@ -396,6 +403,7 @@ abstract class _Plant implements Plant {
   @override
   PlantType get type;
   @override
+  @TimestampConverter()
   DateTime get dateAdded;
   @override
   CareSchedule get careSchedule;
@@ -406,8 +414,10 @@ abstract class _Plant implements Plant {
   @override
   HealthStatus? get healthStatus;
   @override
+  @NullableTimestampConverter()
   DateTime? get lastWatered;
   @override
+  @NullableTimestampConverter()
   DateTime? get lastFertilized;
 
   /// Create a copy of Plant
